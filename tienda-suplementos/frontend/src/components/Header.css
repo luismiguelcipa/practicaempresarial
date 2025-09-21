@@ -167,3 +167,65 @@
     display: none;
   }
 }
+
+/* === Estilos adicionales adaptados del usuario === */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+}
+
+/* Carrusel siempre sobre el dropdown */
+#carrusel-superior {
+  position: relative;
+  z-index: 60;
+}
+
+/* Dropdown debajo del carrusel */
+.dropdown-bg {
+  z-index: 40 !important;
+}
+
+/* Estilo personalizado para centrar el dropdown grande */
+.mega-dropdown {
+  position: absolute;
+  left: 35%;
+  transform: translateX(-50%);
+  width: min(900px, 85vw);
+}
+
+/* === Neon border around navbar (static) === */
+#navbar-shell { position: relative; overflow: visible; }
+
+/* Base neon ring */
+#navbar-shell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  padding: 2px; /* thickness */
+  /* Escala de rojos, negros y carmesí */
+  background: linear-gradient(
+    90deg,
+    #000000,
+    #960018,
+    #dc143c,
+    #8b0000,
+    #000000,
+    #dc143c,
+    #ff1e1e,
+    #960018,
+    #000000
+  );
+  /* ring-only mask */
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  /* Brillo en tonos carmesí/rojo */
+  filter: drop-shadow(0 0 8px #dc143c) drop-shadow(0 0 12px #8b0000);
+  pointer-events: none;
+}

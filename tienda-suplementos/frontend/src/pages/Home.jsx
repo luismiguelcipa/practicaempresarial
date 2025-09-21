@@ -1,32 +1,28 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Star, Truck, Shield, RotateCcw } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
+import TextCarrousel from '../components/TextCarrousel';
 import { products } from '../data/products';
+import heroVideo from '../assets/images/d74e90ff5ff8439aa70ba7559fa09ab7.HD-720p-4.5Mbps-51800263.mp4';
 
 const Home = () => {
   const featuredProducts = products.slice(0, 4);
 
   return (
     <div className="min-h-screen">
+      <TextCarrousel />
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-primary-600 to-primary-700 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-          <div className="text-center">
-            <h1 className="text-4xl md:text-6xl font-bold mb-6">
-              Suplementos Deportivos de Calidad
-            </h1>
-            <p className="text-xl md:text-2xl mb-8 text-primary-100">
-              Potencia tu rendimiento con los mejores suplementos del mercado
-            </p>
-            <Link
-              to="/products"
-              className="inline-flex items-center bg-white text-primary-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
-            >
-              Ver Productos
-              <ArrowRight className="ml-2" size={20} />
-            </Link>
-          </div>
-        </div>
+      {/* Hero Video - Full screen detrás del carrusel */}
+      <section className="relative w-full h-screen -mt-9 bg-black">
+        <video
+          className="absolute inset-0 w-full h-full object-cover"
+          src={heroVideo}
+          autoPlay
+          loop
+          muted
+          playsInline
+        />
+        {/* Overlay opcional para CTA sobre el video (agregar si se requiere) */}
       </section>
 
       {/* Features Section */}
@@ -38,7 +34,7 @@ const Home = () => {
                 <Truck className="text-primary-600" size={24} />
               </div>
               <h3 className="text-lg font-semibold mb-2">Envío Gratis</h3>
-              <p className="text-gray-600">En compras superiores a $50</p>
+              <p className="text-gray-600">DESDE $0</p>
             </div>
             
             <div className="text-center">

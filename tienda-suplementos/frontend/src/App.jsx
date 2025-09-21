@@ -4,6 +4,9 @@ import Home from './pages/Home';
 import Products from './pages/Products';
 import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
+import CartDrawer from './components/CartDrawer';
+import SearchDrawer from './components/SearchDrawer';
+import LoginModal from './components/LoginModal';
 import Login from './pages/Login';
 import EmailLogin from './pages/EmailLogin';
 import VerifyEmail from './pages/VerifyEmail';
@@ -13,6 +16,9 @@ function App() {
   return (
     <div>
       <Header />
+      <CartDrawer />
+  <SearchDrawer />
+    <LoginModal />
       <main>
         <Routes>
           <Route path="/" element={<Home />} />

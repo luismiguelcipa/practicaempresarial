@@ -12,16 +12,21 @@ const Home = () => {
     <div className="min-h-screen">
       <TextCarrousel />
       {/* Hero Section */}
-      {/* Hero Video - Full screen detrás del carrusel */}
-      <section className="relative w-full h-screen -mt-9 bg-black">
+      {/* Hero Video - Full screen menos el alto del carrusel superior (h-9 = 36px) */}
+      <section
+        className="relative w-full bg-black z-0"
+        style={{ height: 'calc(100vh - 36px)' }}
+      >
         <video
           className="absolute inset-0 w-full h-full object-cover"
-          src={heroVideo}
           autoPlay
           loop
           muted
           playsInline
-        />
+          preload="auto"
+        >
+          <source src={heroVideo} type="video/mp4" />
+        </video>
         {/* Overlay opcional para CTA sobre el video (agregar si se requiere) */}
       </section>
 

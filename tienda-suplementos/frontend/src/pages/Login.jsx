@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import headerImg from '../assets/images/foooter.jpg';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -38,20 +39,36 @@ export default function Login() {
 
   return (
     <div style={{
-      maxWidth: '400px',
+      maxWidth: '600px',
       margin: '0 auto',
-      padding: '2rem',
+      padding: '3rem',
       backgroundColor: 'white',
       borderRadius: '8px',
       boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
     }}>
-      <h2 style={{
+      {/* Imagen superior estilo cabecera */}
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+        <img
+          src={headerImg}
+          alt="Marca"
+          style={{
+            width: '140px',
+            height: 'auto',
+            objectFit: 'contain',
+            borderRadius: '6px',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.08)'
+          }}
+        />
+      </div>
+      <h1 style={{
         margin: '0 0 1.5rem 0',
         color: '#333',
+        fontWeight: 800,
+        fontSize: '1.8rem',
         textAlign: 'center'
       }}>
-        {step === 'email' ? 'Iniciar Sesión' : 'Verificar Código'}
-      </h2>
+        {step === 'email' ? 'REGISTRATE' : 'Verificar Código'}
+      </h1>
       
       {message && (
         <div style={{
@@ -73,10 +90,23 @@ export default function Login() {
               style={{
                 display: 'block',
                 marginBottom: '0.5rem',
-                color: '#444'
+                color: '#444',
+                fontSize: '1.2rem',
+                fontWeight: 700
               }}
             >
-              Correo Electrónico
+              Ingresa tu Email
+            </label>  <label
+              htmlFor="email"
+              style={{
+                display: 'block',
+                marginBottom: '0.5rem',
+                color: '#444',
+                fontSize: '1rem',
+                fontWeight: 400
+              }}
+            >
+              Te enviaremos un código de verificación
             </label>
             <input
               type="email"
@@ -88,9 +118,9 @@ export default function Login() {
                 padding: '0.5rem',
                 border: '1px solid #ddd',
                 borderRadius: '4px',
-                fontSize: '1rem'
+                fontSize: '1.125rem'
               }}
-              placeholder="tu@email.com"
+              placeholder="ejemplo@correo.com"
               required
             />
           </div>
@@ -116,7 +146,7 @@ export default function Login() {
                 padding: '0.5rem',
                 border: '1px solid #ddd',
                 borderRadius: '4px',
-                fontSize: '1rem'
+                fontSize: '1.125rem'
               }}
               placeholder="Ingresa el código"
               required
@@ -141,7 +171,7 @@ export default function Login() {
           {loading 
             ? 'Cargando...' 
             : step === 'email' 
-              ? 'Enviar Código de Verificación' 
+              ? 'Solicita Tu Código' 
               : 'Verificar Código'
           }
         </button>

@@ -1,11 +1,12 @@
 import { useEffect } from 'react';
 import { useUI } from '../context/UIContext';
 import Login from '../pages/Login';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 export default function LoginModal() {
   const { isLoginOpen, openLogin, closeLogin } = useUI();
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const onKeyDown = (e) => {
@@ -14,6 +15,15 @@ export default function LoginModal() {
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [closeLogin]);
+
+  useEffect(() => {
+    // Bloquea el scroll del body mientras el modal está abierto
+    if (isLoginOpen) {
+      const previous = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = previous; };
+    }
+  }, [isLoginOpen]);
 
   useEffect(() => {
     // Abrir modal cuando ruta sea /login, cerrarlo si cambia a otra
@@ -32,7 +42,7 @@ export default function LoginModal() {
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-        onClick={closeLogin}
+        onClick={() => { closeLogin(); navigate('/'); }}
       />
 
       {/* Contenedor centrado */}
@@ -41,12 +51,12 @@ export default function LoginModal() {
         <div className="relative">
           {/* Botón cerrar */}
           <button
-            onClick={closeLogin}
+            onClick={() => { closeLogin(); navigate('/'); }}
             className="absolute -right-3 -top-3 z-[101] rounded-full bg-white text-black w-8 h-8 shadow-md hover:bg-gray-100"
             aria-label="Cerrar"
             title="Cerrar"
           >
-            ×
+            X
           </button>
           <Login />
         </div>

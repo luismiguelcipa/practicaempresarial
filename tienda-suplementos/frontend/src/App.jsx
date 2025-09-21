@@ -25,7 +25,8 @@ function App() {
           <Route path="/products" element={<Products />} />
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/cart" element={<Cart />} />
-          <Route path="/login" element={<Login />} />
+          {/* /login no es una página aparte: renderiza Home y el modal se abre por ruta */}
+          <Route path="/login" element={<Home />} />
           <Route path="/email-login" element={<EmailLogin />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/profile" element={<Profile />} />

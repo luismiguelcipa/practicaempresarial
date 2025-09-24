@@ -1,3 +1,5 @@
+import aspectRatio from '@tailwindcss/aspect-ratio';
+
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
@@ -8,47 +10,47 @@ export default {
     extend: {
       colors: {
         primary: {
-          50: '#eff6ff',
-          100: '#dbeafe',
-          200: '#febfbfff',
-          300: '#fda193ff',
-          400: '#fa6060ff',
-          500: '#5d3bf6ff',
-          600: '#4925ebff',
-          700: '#d81d1dff',
-          800: '#af491eff',
-          900: '#8a201eff',
+          50: '#fef2f2',   // Rojo muy claro
+          100: '#fee2e2',  // Rojo claro
+          200: '#fecaca',  // Rojo suave
+          300: '#fca5a5',  // Rojo medio claro
+          400: '#f87171',  // Rojo medio
+          500: '#dc2626',  // Rojo principal
+          600: '#b91c1c',  // Rojo fuerte
+          700: '#991b1b',  // Rojo oscuro
+          800: '#7f1d1d',  // Rojo muy oscuro
+          900: '#450a0a',  // Rojo casi negro
         },
         gray: {
-          50: '#F9FAFB',
-          100: '#F3F4F6',
-          200: '#E5E7EB',
-          300: '#D1D5DB',
-          400: '#9CA3AF',
-          500: '#6B7280',
-          600: '#4B5563',
-          700: '#374151',
-          800: '#1F2937',
-          900: '#111827',
-          950: '#172554',
+          50: '#ffffff',   // Blanco puro
+          100: '#f9fafb',  // Blanco grisáceo
+          200: '#f3f4f6',  // Gris muy claro
+          300: '#e5e7eb',  // Gris claro
+          400: '#9ca3af',  // Gris medio
+          500: '#6b7280',  // Gris
+          600: '#4b5563',  // Gris oscuro
+          700: '#374151',  // Gris muy oscuro
+          800: '#1f2937',  // Negro grisáceo
+          900: '#111827',  // Negro principal
+          950: '#000000',  // Negro puro
         },
         secondary: {
-          50: '#f0fdf4',
-          100: '#dcfce7',
-          200: '#bbf7d0',
-          300: '#86efac',
-          400: '#4ade80',
-          500: '#22c55e',
-          600: '#16a34a',
-          700: '#15803d',
-          800: '#166534',
-          900: '#14532d',
-          950: '#0f3d22',
+          50: '#fafafa',   // Blanco grisáceo
+          100: '#f5f5f5',  // Gris muy claro
+          200: '#e5e5e5',  // Gris claro
+          300: '#d4d4d4',  // Gris medio claro
+          400: '#a3a3a3',  // Gris medio
+          500: '#737373',  // Gris
+          600: '#525252',  // Gris oscuro
+          700: '#404040',  // Gris muy oscuro
+          800: '#262626',  // Negro grisáceo
+          900: '#171717',  // Negro
+          950: '#0a0a0a',  // Negro muy oscuro
         },
       },
     },
   },
   plugins: [
-    require('@tailwindcss/aspect-ratio'), // necesario para aspect-w-1 aspect-h-1
+    aspectRatio, // necesario para aspect-w-1 aspect-h-1
   ],
 }

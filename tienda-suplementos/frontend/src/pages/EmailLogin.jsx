@@ -1,179 +1,189 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Mail, ArrowRight, Loader } from 'lucide-react';
+import { Mail, ArrowRight, Loader, CheckCircle2, RefreshCcw } from 'lucide-react';
 import Alert from '../components/Alert';
 
+// Componente corregido: login por email con paso opcional de código si el backend lo requiere
 const EmailLogin = () => {
   const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
+  const [step, setStep] = useState('email'); // 'email' | 'code'
   const [emailError, setEmailError] = useState('');
   const [alert, setAlert] = useState({ show: false, type: '', message: '' });
-  const { login, loading } = useAuth();
+  const { login, verifyCode, resendCode, loading } = useAuth();
   const navigate = useNavigate();
 
-  // Validación de email en tiempo real
-  const validateEmail = (email) => {
+  const validateEmail = (value) => {
+    if (!value) return '';
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!email) {
-      return '';
-    }
-    if (!emailRegex.test(email)) {
-      return 'Por favor ingresa un email válido';
-    }
-    return '';
+    return emailRegex.test(value) ? '' : 'Por favor ingresa un email válido';
   };
 
   const handleEmailChange = (e) => {
-    const newEmail = e.target.value;
-    setEmail(newEmail);
-    setEmailError(validateEmail(newEmail));
+    const value = e.target.value;
+    setEmail(value);
+    setEmailError(validateEmail(value));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmitEmail = async (e) => {
     e.preventDefault();
-    
-    // Validación final
-    const error = validateEmail(email);
-    if (error) {
-      setEmailError(error);
+    setAlert({ show: false, type: '', message: '' });
+    const validation = validateEmail(email);
+    if (validation) {
+      setEmailError(validation);
       return;
     }
-
-    try {
-      setAlert({ show: false, type: '', message: '' });
-      const result = await login(email);
-      if (result.requiresVerification) {
-        // Guardar email en localStorage para recuperación en /verify-email
-        localStorage.setItem('pendingEmail', email);
-        setAlert({
-          show: true,
-          type: 'info',
-          message: '¡Código enviado! Revisa tu correo.'
-        });
-        navigate('/verify-email', { state: { email } });
-      } else {
-        setAlert({
-          show: true,
-          type: 'success',
-          message: '¡Bienvenido de vuelta!'
-        });
-        setTimeout(() => {
-          navigate('/');
-        }, 1000);
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      setAlert({
-        show: true,
-        type: 'error',
-        message: error.response?.data?.message || error.message || 'Error al iniciar sesión'
-      });
+    const result = await login(email);
+    if (result.success && result.requiresVerification) {
+      setAlert({ show: true, type: 'success', message: 'Código enviado a tu correo.' });
+      setStep('code');
+    } else if (result.success) {
+      setAlert({ show: true, type: 'success', message: 'Inicio de sesión exitoso.' });
+      setTimeout(() => navigate('/'), 800);
+    } else {
+      setAlert({ show: true, type: 'error', message: result.error || 'Error al iniciar sesión' });
     }
   };
 
-  const handleVerifyCode = async (e) => {
+  const handleSubmitCode = async (e) => {
     e.preventDefault();
-    try {
-      setAlert({ show: false, type: '', message: '' });
-      const result = await verifyCode(email, code);
-      if (result.success) {
-        setAlert({
-          show: true,
-          type: 'success',
-          message: '¡Verificación exitosa!'
-        });
-        setTimeout(() => {
-          navigate('/');
-        }, 1500);
-      }
-    } catch (error) {
-      setAlert({
-        show: true,
-        type: 'error',
-        message: error.message || 'Error al verificar el código'
-      });
+    setAlert({ show: false, type: '', message: '' });
+    if (!code.trim()) {
+      setAlert({ show: true, type: 'error', message: 'Ingresa el código enviado a tu email.' });
+      return;
+    }
+    const result = await verifyCode(email, code.trim());
+    if (result.success) {
+      setAlert({ show: true, type: 'success', message: '¡Verificación exitosa!' });
+      setTimeout(() => navigate('/'), 1000);
+    } else {
+      setAlert({ show: true, type: 'error', message: result.error || 'Código inválido' });
     }
   };
 
-  const handleResendCode = async () => {
-    try {
-      setAlert({ show: false, type: '', message: '' });
-      const result = await resendCode(email);
-      if (result.success) {
-        setAlert({
-          show: true,
-          type: 'success',
-          message: '¡Nuevo código enviado! Revisa tu correo electrónico.'
-        });
-      }
-    } catch (error) {
-      setAlert({
-        show: true,
-        type: 'error',
-        message: error.message || 'Error al reenviar el código'
-      });
+  const handleResend = async () => {
+    setAlert({ show: false, type: '', message: '' });
+    const result = await resendCode(email);
+    if (result.success) {
+      setAlert({ show: true, type: 'success', message: 'Nuevo código enviado.' });
+    } else {
+      setAlert({ show: true, type: 'error', message: result.error || 'No se pudo reenviar el código.' });
     }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
-        {alert.show && <Alert type={alert.type} message={alert.message} />}
+        {alert.show && (
+          <Alert type={alert.type} message={alert.message} />
+        )}
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Iniciar Sesión
+          <h2 className="mt-2 text-center text-3xl font-extrabold text-gray-900">
+            {step === 'email' ? 'Iniciar Sesión' : 'Verificar Código'}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Ingresa tu email para continuar
+            {step === 'email' ? 'Ingresa tu email para continuar' : 'Revisa tu correo y escribe el código'}
           </p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
-            <div>
-              <label htmlFor="email-address" className="sr-only">
-                Email
-              </label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
+
+        {step === 'email' && (
+          <form className="mt-8 space-y-6" onSubmit={handleSubmitEmail}>
+            <div className="rounded-md shadow-sm -space-y-px">
+              <div>
+                <label htmlFor="email-address" className="sr-only">Email</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Mail className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    id="email-address"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    required
+                    className={`appearance-none rounded-md relative block w-full px-3 py-2 pl-10 border ${emailError ? 'border-red-500' : 'border-gray-300'} placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm`}
+                    placeholder="tu@email.com"
+                    value={email}
+                    onChange={handleEmailChange}
+                  />
                 </div>
+                {emailError && <p className="mt-1 text-sm text-red-600">{emailError}</p>}
+              </div>
+            </div>
+            <div>
+              <button
+                type="submit"
+                disabled={loading || emailError || !email}
+                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span className="absolute left-0 inset-y-0 flex items-center pl-3">
+                  {loading ? (
+                    <Loader className="h-5 w-5 text-primary-200 animate-spin" />
+                  ) : (
+                    <ArrowRight className="h-5 w-5 text-primary-200 group-hover:text-white" />
+                  )}
+                </span>
+                {loading ? 'Enviando...' : 'Continuar'}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {step === 'code' && (
+          <form className="mt-8 space-y-6" onSubmit={handleSubmitCode}>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="code" className="block text-sm font-medium text-gray-700 mb-1">Código</label>
                 <input
-                  id="email-address"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
+                  id="code"
+                  name="code"
+                  type="text"
                   required
-                  className={`appearance-none rounded-md relative block w-full px-3 py-2 pl-10 border ${
-                    emailError ? 'border-red-500' : 'border-gray-300'
-                  } placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm`}
-                  placeholder="tu@email.com"
-                  value={email}
-                  onChange={handleEmailChange}
+                  maxLength={6}
+                  className="appearance-none rounded-md relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-400 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm tracking-widest text-center"
+                  placeholder="000000"
+                  value={code}
+                  onChange={(e) => setCode(e.target.value)}
                 />
               </div>
-              {emailError && (
-                <p className="mt-1 text-sm text-red-600">{emailError}</p>
-              )}
+              <div className="flex items-center justify-between text-sm">
+                <button type="button" onClick={handleResend} className="flex items-center gap-1 text-primary-600 hover:underline disabled:opacity-50" disabled={loading}>
+                  <RefreshCcw className="h-4 w-4" /> Reenviar código
+                </button>
+                <button type="button" onClick={() => setStep('email')} className="text-gray-500 hover:underline">
+                  Cambiar email
+                </button>
+              </div>
             </div>
-          </div>
+            <div>
+              <button
+                type="submit"
+                disabled={loading || code.length < 4}
+                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span className="absolute left-0 inset-y-0 flex items-center pl-3">
+                  {loading ? (
+                    <Loader className="h-5 w-5 text-green-200 animate-spin" />
+                  ) : (
+                    <CheckCircle2 className="h-5 w-5 text-green-200 group-hover:text-white" />
+                  )}
+                </span>
+                {loading ? 'Verificando...' : 'Verificar Código'}
+              </button>
+            </div>
+          </form>
+        )}
 
-          <div>
-            <button
-              type="submit"
-              disabled={loading || emailError || !email}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-                {loading ? (
-                  <Loader className="h-5 w-5 text-primary-500 animate-spin" />
-                ) : (
-                  <ArrowRight className="h-5 w-5 text-primary-500 group-hover:text-primary-400" />
-                )}
-              </span>
-              {loading ? 'Enviando...' : 'Iniciar Sesión'}
-            </button>
-          </div>
-        </form>
+        <div className="mt-6 text-center text-sm text-gray-600">
+          <button
+            type="button"
+            className="text-primary-600 hover:underline font-semibold"
+            onClick={() => navigate('/login')}
+          >
+            Volver al modal de inicio
+          </button>
+        </div>
       </div>
     </div>
   );

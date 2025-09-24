@@ -1,0 +1,1 @@
+Este archivo existe para mantener la carpeta si se necesita tras borrar LoginSimple.jsx. Se puede eliminar sin problemas.

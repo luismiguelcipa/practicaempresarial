@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Star, Truck, Shield, RotateCcw } from 'lucide-react';
 import ProductCard from '../components/ProductCard';
-import TextCarrousel from '../components/TextCarrousel';
 import { products } from '../data/products';
 import heroVideo from '../assets/images/d74e90ff5ff8439aa70ba7559fa09ab7.HD-720p-4.5Mbps-51800263.mp4';
 
@@ -10,7 +9,6 @@ const Home = () => {
 
   return (
     <div className="min-h-screen">
-      <TextCarrousel />
       {/* Hero Section */}
       {/* Hero Video - Full screen menos el alto del carrusel superior (h-9 = 36px) */}
       <section

@@ -9,8 +9,7 @@ import { useAuth } from '../context/AuthContext';
 // Navbar convertido desde HTML + Tailwind a React, preservando IDs y comportamiento de scroll.
 const Header = () => {
   const navbarRef = useRef(null);
-  const [smallTop, setSmallTop] = useState(false); // top 20px cuando scroll > 40
-  const [solidBg, setSolidBg] = useState(false); // bg negro sólido cuando scroll > 780
+  const [solidBg, setSolidBg] = useState(false); // control solo para clases; script original manipulaba directamente
   const { openCart } = useCart();
   const { openSearch } = useUI();
   const { isAuthenticated } = useAuth();
@@ -25,12 +24,8 @@ const Header = () => {
   };
 
   useEffect(() => {
-    const onScroll = () => {
-      const y = window.scrollY || window.pageYOffset || 0;
-      setSmallTop(y > 40);
-      setSolidBg(y > 780);
-
-      // Replicar ajustes directos a dropdowns si tuvieran clase 'fixed'
+    const handleScroll = () => {
+      const navbar = document.getElementById('main-navbar');
       const catalogDropdown = document.getElementById('catalog-dropdown');
       const accessoriesDropdown = document.getElementById('accesorios-dropdown');
       const nosotrosDropdown = document.getElementById('nosotros-dropdown');
@@ -39,19 +34,24 @@ const Header = () => {
       const accessoriesContent = accessoriesDropdown ? accessoriesDropdown.querySelector('div') : null;
       const nosotrosContent = nosotrosDropdown ? nosotrosDropdown.querySelector('div') : null;
 
+      const y = window.scrollY || 0;
+
+      if (navbar) {
+        if (y > 40) {
+          navbar.style.top = '20px';
+        } else {
+          navbar.style.top = '40px';
+        }
+      }
+
       if (y > 40) {
         if (catalogDropdown && catalogDropdown.classList.contains('fixed') && catalogContent) {
           catalogDropdown.style.height = '440px';
           catalogContent.style.paddingTop = '80px';
         }
-
-        if (
-          accessoriesDropdown && accessoriesDropdown.classList.contains('fixed') && accessoriesContent &&
-          nosotrosDropdown && nosotrosDropdown.classList.contains('fixed') && nosotrosContent
-        ) {
+        if (accessoriesDropdown && accessoriesDropdown.classList.contains('fixed') && accessoriesContent && nosotrosDropdown && nosotrosDropdown.classList.contains('fixed') && nosotrosContent) {
           accessoriesDropdown.style.height = '260px';
           accessoriesContent.style.paddingTop = '80px';
-
           nosotrosDropdown.style.height = '260px';
           nosotrosContent.style.paddingTop = '80px';
         }
@@ -60,32 +60,29 @@ const Header = () => {
           catalogDropdown.style.height = '480px';
           catalogContent.style.paddingTop = '128px';
         }
-
-        if (
-          accessoriesDropdown && accessoriesDropdown.classList.contains('fixed') && accessoriesContent &&
-          nosotrosDropdown && nosotrosDropdown.classList.contains('fixed') && nosotrosContent
-        ) {
+        if (accessoriesDropdown && accessoriesDropdown.classList.contains('fixed') && accessoriesContent && nosotrosDropdown && nosotrosDropdown.classList.contains('fixed') && nosotrosContent) {
           accessoriesDropdown.style.height = '300px';
           accessoriesContent.style.paddingTop = '128px';
-
           nosotrosDropdown.style.height = '300px';
           nosotrosContent.style.paddingTop = '128px';
         }
       }
+
+      // Fondo sólido > 780
+      setSolidBg(y > 780);
     };
 
-    // Set initial state and add listener
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   return (
     <nav
       id="main-navbar"
       ref={navbarRef}
-      className="fixed left-1/2 -translate-x-1/2 transform z-50 transition-all duration-300 bg-transparent"
-      style={{ top: smallTop ? '20px' : '60px' }}
+      className="fixed left-1/2 -translate-x-1/2 transform z-50 transition-all duration-300"
+      style={{ top: '40px' }}
     >
       <div
         id="navbar-shell"

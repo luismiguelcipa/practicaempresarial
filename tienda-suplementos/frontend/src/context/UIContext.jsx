@@ -21,10 +21,10 @@ export const UIProvider = ({ children }) => {
       openSearch,
       closeSearch,
       toggleSearch,
-      isLoginOpen,
-      openLogin,
-      closeLogin,
-      toggleLogin,
+  isLoginOpen,
+  openLogin,
+  closeLogin,
+  toggleLogin,
     }}>
       {children}
     </UIContext.Provider>

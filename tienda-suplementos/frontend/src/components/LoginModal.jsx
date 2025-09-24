@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useUI } from '../context/UIContext';
-import Login from '../pages/Login';
+import Login from '../pages/Login'; // ahora: Registro (email + código)
+import LoginSimple from '../pages/LoginSimple'; // login directo
 import { useLocation, useNavigate } from 'react-router-dom';
 
 export default function LoginModal() {
@@ -8,6 +9,7 @@ export default function LoginModal() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  // Cerrar con Escape
   useEffect(() => {
     const onKeyDown = (e) => {
       if (e.key === 'Escape') closeLogin();
@@ -16,8 +18,8 @@ export default function LoginModal() {
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [closeLogin]);
 
+  // Bloquear scroll cuando modal abierto
   useEffect(() => {
-    // Bloquea el scroll del body mientras el modal está abierto
     if (isLoginOpen) {
       const previous = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
@@ -26,19 +28,21 @@ export default function LoginModal() {
   }, [isLoginOpen]);
 
   useEffect(() => {
-    // Abrir modal cuando ruta sea /login, cerrarlo si cambia a otra
-    if (location.pathname === '/login') {
+    // Abrir modal cuando ruta sea /login (login simple) o /sign-in (registro)
+    if (location.pathname === '/login' || location.pathname === '/sign-in') {
       openLogin();
     } else if (isLoginOpen) {
+      // Salimos de rutas de auth -> cerrar
       closeLogin();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
-  if (!isLoginOpen) return null;
+  // Solo renderizar si modal está abierto y estamos en una ruta válida
+  if (!isLoginOpen || (location.pathname !== '/login' && location.pathname !== '/sign-in')) return null;
 
   return (
-    <div className="fixed inset-0 z-[100]">
+  <div className="fixed inset-0 z-[100]" role="dialog" aria-modal="true">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/70 backdrop-blur-sm"
@@ -46,9 +50,18 @@ export default function LoginModal() {
       />
 
       {/* Contenedor centrado */}
-      <div className="absolute inset-0 flex items-center justify-center p-4">
-        {/* Contenido del modal: reutiliza el componente Login (que ya renderiza una tarjeta blanca) */}
-        <div className="relative">
+      <div
+        className="absolute inset-0 flex items-center justify-center p-4"
+        onMouseDown={(e) => {
+          // Si el click comienza exactamente en este contenedor (no en el panel interno) cerramos
+          if (e.target === e.currentTarget) {
+            closeLogin();
+            navigate('/');
+          }
+        }}
+      >
+        {/* Contenido del modal */}
+        <div className="relative" onMouseDown={(e) => e.stopPropagation()}>
           {/* Botón cerrar */}
           <button
             onClick={() => { closeLogin(); navigate('/'); }}
@@ -58,7 +71,8 @@ export default function LoginModal() {
           >
             X
           </button>
-          <Login />
+          {location.pathname === '/login' && <LoginSimple />}
+          {location.pathname === '/sign-in' && <Login />}
         </div>
       </div>
     </div>

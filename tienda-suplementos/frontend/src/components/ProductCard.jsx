@@ -17,7 +17,7 @@ const ProductCard = ({ product }) => {
           <div className="relative">
             <img
               className="w-full h-56 object-cover"
-              src={product.image}
+              src={product.image || '/placeholder-product.png'}
               alt={product.name}
             />
           </div>

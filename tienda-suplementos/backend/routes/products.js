@@ -1,16 +1,118 @@
 const express = require('express');
 const router = express.Router();
-
-
 const Product = require('../models/Product');
+const { protect } = require('../middleware/auth');
+const isAdmin = require('../middleware/isAdmin');
 
-// Obtener todos los productos
+// GET /api/products  (listado con filtros / paginación / búsqueda)
 router.get('/', async (req, res) => {
   try {
-    const products = await Product.find();
-    res.json(products);
+    const {
+      category,
+      search,
+      minPrice,
+      maxPrice,
+      page = 1,
+      limit = 20,
+      sort = '-createdAt',
+      includeInactive = 'false'
+    } = req.query;
+
+    const query = {};
+    if (category) query.category = category;
+    if (includeInactive !== 'true') query.isActive = true; // por defecto solo activos
+    if (minPrice || maxPrice) {
+      query.price = {};
+      if (minPrice) query.price.$gte = Number(minPrice);
+      if (maxPrice) query.price.$lte = Number(maxPrice);
+    }
+    if (search) {
+      query.$text = { $search: search };
+    }
+
+    const numericLimit = Math.min(Number(limit), 100);
+    const skip = (Number(page) - 1) * numericLimit;
+
+    const findPromise = Product.find(query)
+      .sort(sort.split(',').join(' '))
+      .skip(skip)
+      .limit(numericLimit);
+    const countPromise = Product.countDocuments(query);
+
+    const [products, total] = await Promise.all([findPromise, countPromise]);
+
+    res.json({
+      success: true,
+      data: products,
+      pagination: {
+        page: Number(page),
+        pages: Math.ceil(total / numericLimit) || 1,
+        limit: numericLimit,
+        total,
+        hasNext: Number(page) * numericLimit < total,
+        hasPrev: Number(page) > 1
+      }
+    });
   } catch (error) {
-    res.status(500).json({ message: 'Error al obtener productos' });
+    console.error('Error listando productos:', error);
+    res.status(500).json({ success: false, message: 'Error al obtener productos' });
+  }
+});
+
+// GET /api/products/:id (detalle)
+router.get('/:id', async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+    if (!product || !product.isActive) {
+      return res.status(404).json({ success: false, message: 'Producto no encontrado' });
+    }
+    res.json({ success: true, data: product });
+  } catch (error) {
+    res.status(400).json({ success: false, message: 'ID inválido' });
+  }
+});
+
+// POST /api/products (crear) - admin
+router.post('/', protect, isAdmin, async (req, res) => {
+  try {
+    const product = await Product.create(req.body);
+    res.status(201).json({ success: true, data: product });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+// PUT /api/products/:id (actualizar) - admin
+router.put('/:id', protect, isAdmin, async (req, res) => {
+  try {
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true, runValidators: true }
+    );
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Producto no encontrado' });
+    }
+    res.json({ success: true, data: product });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+});
+
+// DELETE /api/products/:id (soft delete) - admin
+router.delete('/:id', protect, isAdmin, async (req, res) => {
+  try {
+    const product = await Product.findByIdAndUpdate(
+      req.params.id,
+      { isActive: false },
+      { new: true }
+    );
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Producto no encontrado' });
+    }
+    res.json({ success: true, message: 'Producto desactivado', data: product });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
   }
 });
 

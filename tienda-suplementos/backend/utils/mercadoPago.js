@@ -15,6 +15,16 @@ const payment = new Payment(client);
 // Crear preferencia de pago
 const createPreference = async (orderData) => {
   try {
+    // Modo demo para pruebas (cuando no hay credenciales reales)
+    if (!process.env.MERCADOPAGO_ACCESS_TOKEN || process.env.MERCADOPAGO_ACCESS_TOKEN.includes('TEST-1234567890')) {
+      console.log('🎭 MODO DEMO - Simulando creación de preferencia MercadoPago');
+      return {
+        id: `demo-${Date.now()}`,
+        init_point: 'https://www.mercadopago.com.ar/checkout/v1/redirect?pref_id=demo-preference',
+        sandbox_init_point: 'https://sandbox.mercadopago.com.ar/checkout/v1/redirect?pref_id=demo-preference'
+      };
+    }
+
     const preferenceData = {
       items: orderData.items.map(item => ({
         id: item.product._id.toString(),

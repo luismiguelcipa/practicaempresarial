@@ -33,6 +33,10 @@ const productSchema = new mongoose.Schema({
     default: 0,
     min: [0, 'El stock no puede ser negativo']
   },
+  isActive: {
+    type: Boolean,
+    default: true
+  },
   rating: {
     type: Number,
     default: 0,
@@ -62,5 +66,9 @@ const productSchema = new mongoose.Schema({
 }, {
   timestamps: true
 });
+
+// Índices para búsquedas y filtros frecuentes
+productSchema.index({ category: 1 });
+productSchema.index({ name: 'text', description: 'text' });
 
 module.exports = mongoose.model('Product', productSchema);

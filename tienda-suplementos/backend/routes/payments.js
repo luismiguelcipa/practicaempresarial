@@ -77,11 +77,9 @@ router.post('/create-preference', protect, async (req, res) => {
 
     res.json({
       success: true,
-      data: {
-        preferenceId: preference.id,
-        initPoint: preference.init_point,
-        orderId: order._id
-      }
+      preferenceId: preference.id,
+      init_point: preference.init_point,
+      orderId: order._id
     });
   } catch (error) {
     console.error('Error creando preferencia:', error);
@@ -175,6 +173,58 @@ router.get('/payment-status/:orderId', protect, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error obteniendo estado del pago'
+    });
+  }
+});
+
+// Verificar pago por ID
+router.get('/verify/:paymentId', protect, async (req, res) => {
+  try {
+    const payment = await getPayment(req.params.paymentId);
+    
+    const order = await Order.findOne({
+      _id: payment.external_reference
+    }).populate('items.product');
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Orden no encontrada'
+      });
+    }
+
+    res.json({
+      success: true,
+      order: order,
+      payment: payment
+    });
+  } catch (error) {
+    console.error('Error verificando pago:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error verificando pago'
+    });
+  }
+});
+
+// Obtener estado de pago por payment ID
+router.get('/status/:paymentId', protect, async (req, res) => {
+  try {
+    const payment = await getPayment(req.params.paymentId);
+    
+    res.json({
+      success: true,
+      id: payment.id,
+      status: payment.status,
+      status_detail: payment.status_detail,
+      payment_method_id: payment.payment_method_id,
+      transaction_amount: payment.transaction_amount
+    });
+  } catch (error) {
+    console.error('Error obteniendo estado del pago:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error obteniendo información del pago'
     });
   }
 });

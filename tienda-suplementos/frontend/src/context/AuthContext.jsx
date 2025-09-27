@@ -70,6 +70,22 @@ export const AuthProvider = ({ children }) => {
     }
   }, [state.token]);
 
+  // Restaurar usuario desde localStorage (incluye role)
+  useEffect(() => {
+    const savedUser = localStorage.getItem('user');
+    if (savedUser && !state.user) {
+      try {
+        const parsed = JSON.parse(savedUser);
+        if (parsed && parsed.email) {
+          dispatch({ type: 'LOGIN_SUCCESS', payload: { user: parsed } });
+        }
+      } catch {
+        // ignorar
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const login = async (email) => {
     dispatch({ type: 'LOGIN_START' });
     try {

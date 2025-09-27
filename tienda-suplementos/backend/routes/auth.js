@@ -22,7 +22,7 @@ router.post('/login', validateEmail, async (req, res) => {
     }
 
     const token = jwt.sign(
-      { id: user._id, email: user.email },
+      { id: user._id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRE }
     );
@@ -39,9 +39,10 @@ router.post('/login', validateEmail, async (req, res) => {
           id: user._id,
           email: user.email,
           firstName: user.firstName,
-          lastName: user.lastName,
+            lastName: user.lastName,
           isEmailVerified: user.isEmailVerified,
-          lastLogin: user.lastLogin
+          lastLogin: user.lastLogin,
+          role: user.role
         }
       }
     });
@@ -117,7 +118,7 @@ router.post('/verify-code', loginLimiter, validateVerifyEmail, async (req, res) 
     await user.save();
 
     const token = jwt.sign(
-      { id: user._id, email: user.email },
+      { id: user._id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRE }
     );
@@ -133,7 +134,8 @@ router.post('/verify-code', loginLimiter, validateVerifyEmail, async (req, res) 
           firstName: user.firstName,
           lastName: user.lastName,
           isEmailVerified: user.isEmailVerified,
-          lastLogin: user.lastLogin
+          lastLogin: user.lastLogin,
+          role: user.role
         }
       }
     });

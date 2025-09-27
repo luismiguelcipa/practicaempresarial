@@ -12,7 +12,7 @@ const Header = () => {
   const [solidBg, setSolidBg] = useState(false); // control solo para clases; script original manipulaba directamente
   const { openCart } = useCart();
   const { openSearch } = useUI();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleUserClick = () => {
@@ -258,17 +258,48 @@ const Header = () => {
 
             {/* Contenedor dropdown Accesorios */}
             <div id="accesorios-dropdown" className="absolute top-full left-1/2 -translate-x-1/2 transform mt-[30px] opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-500">
-              <div className="bg-black/85 backdrop-blur-xl rounded-3xl p-6 border border-white/20 shadow-2xl w-80">
-                <div className="flex flex-col gap-4">
-                  <Link to="/products?cat=accesorios&sub=shakers" className="text-white hover:text-red-400 transition-colors p-3 rounded-xl hover:bg-white/10">
-                    Shakers
-                  </Link>
-                  <Link to="/products?cat=accesorios&sub=ropa" className="text-white hover:text-red-400 transition-colors p-3 rounded-xl hover:bg-white/10">
-                    Ropa deportiva
-                  </Link>
-                  <Link to="/products?cat=accesorios&sub=bolsos" className="text-white hover:text-red-400 transition-colors p-3 rounded-xl hover:bg-white/10">
-                    Bolsos
-                  </Link>
+              <div className="bg-black/85 backdrop-blur-xl rounded-3xl p-6 border border-white/20 shadow-2xl w-[28rem]">
+                {/* Items alineados horizontalmente */}
+                <div className="flex flex-row justify-center gap-10">
+                  {/* Shakers */}
+                  <div className="flex flex-col items-center text-center group/item">
+                    <Link to="/products?cat=shakers" className="text-white font-medium hover:text-red-400 transition-colors mb-4 text-sm">
+                      Shakers
+                    </Link>
+                    <Link to="/products?cat=shakers" className="block overflow-hidden rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                      <img
+                        src="https://swsuppss.com/cdn/shop/files/PORTADA_1_5988643b-a584-41de-bb44-42f3fff9e8c7_1440x1440.jpg?v=1753489463"
+                        alt="Shakers"
+                        className="w-20 h-20 object-cover"
+                      />
+                    </Link>
+                  </div>
+                  {/* Ropa Deportiva */}
+                  <div className="flex flex-col items-center text-center group/item">
+                    <Link to="/products?cat=ropa" className="text-white font-medium hover:text-red-400 transition-colors mb-4 text-sm">
+                      Ropa Deportiva
+                    </Link>
+                    <Link to="/products?cat=ropa" className="block overflow-hidden rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                      <img
+                        src="https://swsuppss.com/cdn/shop/files/PORTADA_1_5988643b-a584-41de-bb44-42f3fff9e8c7_1440x1440.jpg?v=1753489463"
+                        alt="Ropa Deportiva"
+                        className="w-20 h-20 object-cover"
+                      />
+                    </Link>
+                  </div>
+                  {/* Bolsos */}
+                  <div className="flex flex-col items-center text-center group/item">
+                    <Link to="/products?cat=bolsos" className="text-white font-medium hover:text-red-400 transition-colors mb-4 text-sm">
+                      Bolsos
+                    </Link>
+                    <Link to="/products?cat=bolsos" className="block overflow-hidden rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                      <img
+                        src="https://swsuppss.com/cdn/shop/files/PORTADA_1_5988643b-a584-41de-bb44-42f3fff9e8c7_1440x1440.jpg?v=1753489463"
+                        alt="Bolsos"
+                        className="w-20 h-20 object-cover"
+                      />
+                    </Link>
+                  </div>
                 </div>
               </div>
             </div>
@@ -281,6 +312,12 @@ const Header = () => {
           <Link to="/products" className="text-white font-semibold hover:text-red-400 transition-all duration-300 hover:-translate-y-1">
             Definición
           </Link>
+
+          {user?.role === 'admin' && (
+            <Link to="/admin/products" className="text-white font-semibold hover:text-red-400 transition-all duration-300 hover:-translate-y-1">
+              Admin
+            </Link>
+          )}
 
           {/* Dropdown Nosotros */}
           <div className="relative group">
@@ -311,7 +348,7 @@ const Header = () => {
         </div>
 
         {/* Iconos de acción */}
-        <div className="flex items-center gap-3">
+  <div className="flex items-center gap-3">
           <a href="#" className="rounded-full bg-white/10 p-2 hover:bg-red-500/20 hover:scale-110 transition-all duration-300" aria-label="Favoritos">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" className="w-5 h-5 text-white" fill="currentColor">
               <path d="M178,42c-21,0-39.26,9.47-50,25.34C117.26,51.47,99,42,78,42a60.07,60.07,0,0,0-60,60c0,29.2,18.2,59.59,54.1,90.31a334.68,334.68,0,0,0,53.06,37,6,6,0,0,0,5.68,0,334.68,334.68,0,0,0,53.06-37C219.8,161.59,238,131.2,238,102A60.07,60.07,0,0,0,178,42ZM128,217.11C111.59,207.64,30,157.72,30,102A48.05,48.05,0,0,1,78,54c20.28,0,37.31,10.83,44.45,28.27a6,6,0,0,0,11.1,0C140.69,64.83,157.72,54,178,54a48.05,48.05,0,0,1,48,48C226,157.72,144.41,207.64,128,217.11Z"></path>
@@ -323,6 +360,14 @@ const Header = () => {
               <path d="M128,128a48,48,0,1,0-48-48A48,48,0,0,0,128,128Zm0,16c-39.7,0-72,32.3-72,72a8,8,0,0,0,8,8H192a8,8,0,0,0,8-8C200,176.3,167.7,144,128,144Z"></path>
             </svg>
           </button>
+          {isAuthenticated && (
+            <button
+              onClick={() => { logout(); navigate('/'); }}
+              className="inline-flex items-center gap-1 text-[11px] font-semibold px-3 py-1.5 rounded-full bg-red-600/80 hover:bg-red-600 text-white shadow transition-colors active:scale-95"
+            >
+              <span className="leading-none">Salir</span>
+            </button>
+          )}
 
           <button onClick={openSearch} className="rounded-full bg-white/10 p-2 hover:bg-red-500/20 hover:scale-110 transition-all duration-300" aria-label="Buscar">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" className="w-5 h-5 text-white" fill="currentColor">

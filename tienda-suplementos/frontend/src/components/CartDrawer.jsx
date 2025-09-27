@@ -1,5 +1,6 @@
 import React from 'react';
 import { X } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import CartItem from './CartItem';
 
@@ -48,25 +49,29 @@ const CartDrawer = () => {
 
           {/* Footer */}
           <div className="p-4 border-t bg-white">
-            <div className="flex items-center justify-between mb-3">
-              <span className="font-medium">Total</span>
-              <span className="text-lg font-semibold">${getTotalPrice().toFixed(2)}</span>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={clearCart}
-                className="flex-1 px-4 py-2 rounded border border-gray-300 hover:bg-gray-50"
-              >
-                Vaciar
-              </button>
-              <a
-                href="/checkout"
-                className="flex-1 px-4 py-2 rounded bg-blue-600 text-white text-center hover:bg-blue-700"
-                onClick={closeCart}
-              >
-                Finalizar compra
-              </a>
-            </div>
+            {items.length > 0 && (
+              <>
+                <div className="flex items-center justify-between mb-3">
+                  <span className="font-medium">Total</span>
+                  <span className="text-lg font-semibold">${getTotalPrice().toLocaleString()}</span>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={clearCart}
+                    className="flex-1 px-4 py-2 rounded border border-gray-300 hover:bg-gray-50 transition-colors"
+                  >
+                    Vaciar
+                  </button>
+                  <Link
+                    to="/checkout"
+                    className="flex-1 px-4 py-2 rounded bg-green-600 text-white text-center hover:bg-green-700 transition-colors font-medium"
+                    onClick={closeCart}
+                  >
+                    Finalizar Compra
+                  </Link>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </aside>

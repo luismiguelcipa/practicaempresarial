@@ -7,7 +7,7 @@ const CartItem = ({ item }) => {
   const handleQuantityChange = (e) => {
     const newQuantity = parseInt(e.target.value);
     if (newQuantity > 0) {
-      updateQuantity(item.id, newQuantity);
+      updateQuantity(item._key, newQuantity);
     }
   };
 
@@ -22,6 +22,12 @@ const CartItem = ({ item }) => {
         <div>
           <h3 className="text-lg font-semibold">{item.name}</h3>
           <p className="text-gray-600">${item.price}</p>
+          {(item.size || item.flavor) && (
+            <p className="text-xs text-gray-500 mt-1">
+              {item.size && <span className="mr-2">Tamaño: {item.size}</span>}
+              {item.flavor && <span>Sabor: {item.flavor}</span>}
+            </p>
+          )}
         </div>
       </div>
       <div className="flex items-center space-x-4">
@@ -33,7 +39,7 @@ const CartItem = ({ item }) => {
           className="w-16 px-2 py-1 border border-gray-300 rounded-md"
         />
         <button
-          onClick={() => removeFromCart(item.id)}
+          onClick={() => removeFromCart(item._key)}
           className="text-red-500 hover:text-red-700"
         >
           Eliminar

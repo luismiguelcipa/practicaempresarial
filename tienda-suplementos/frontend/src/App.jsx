@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import TextCarrousel from './components/TextCarrousel';
 import Home from './pages/Home';
@@ -20,9 +20,12 @@ import Profile from './pages/Profile';
 import WhatsappFloatButton from './components/WhatsappFloatButton';
 import AdminProducts from './pages/AdminProducts';
 import RequireAdmin from './components/RequireAdmin';
+import Footer from './components/footer';
 
 
 function App() {
+  const location = useLocation();
+  const hideFooter = location.pathname === '/profile' || location.pathname.startsWith('/admin');
   return (
     <div>
       <Header />
@@ -34,6 +37,8 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/products" element={<Products />} />
+          {/* Ruta con categoría en el path para SEO y enlaces directos */}
+          <Route path="/products/:category" element={<Products />} />
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/cart" element={<Cart />} />
           <Route path="/checkout" element={<SimpleCheckoutPage />} />
@@ -51,6 +56,7 @@ function App() {
         </Routes>
       </main>
       <WhatsappFloatButton />
+      {!hideFooter && <Footer />}
     </div>
   );
 }

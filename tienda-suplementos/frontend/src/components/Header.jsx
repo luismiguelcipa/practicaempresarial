@@ -133,10 +133,10 @@ const Header = () => {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-16 justify-items-center place-items-center">
                   {/* Proteína */}
                   <div className="flex flex-col items-center text-center group/item">
-                    <Link to="/products?cat=proteinas" className="text-white font-medium hover:text-red-400 transition-colors mb-4 text-sm">
+                    <Link to="/products/proteinas" className="text-white font-medium hover:text-red-400 transition-colors mb-4 text-sm">
                       Proteína
                     </Link>
-                    <Link to="/products?cat=proteinas" className="block overflow-hidden rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                    <Link to="/products/proteinas" className="block overflow-hidden rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-xl">
                       <img
                         src="https://swsuppss.com/cdn/shop/files/ISO100-1.3_1440x1440.jpg?v=1721497080"
                         alt="Proteína"
@@ -147,10 +147,10 @@ const Header = () => {
 
                   {/* Creatina */}
                   <div className="flex flex-col items-center text-center group/item">
-                    <Link to="/products?cat=creatina" className="text-white font-medium hover:text-red-400 transition-colors mb-4 text-sm">
+                    <Link to="/products/creatina" className="text-white font-medium hover:text-red-400 transition-colors mb-4 text-sm">
                       Creatina
                     </Link>
-                    <Link to="/products?cat=creatina" className="block overflow-hidden rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                    <Link to="/products/creatina" className="block overflow-hidden rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-xl">
                       <img
                         src="https://swsuppss.com/cdn/shop/files/NUTREX_1440x1440.jpg?v=1721492842"
                         alt="Creatina"
@@ -161,10 +161,10 @@ const Header = () => {
 
                   {/* Pre entreno */}
                   <div className="flex flex-col items-center text-center group/item">
-                    <Link to="/products?cat=preworkout" className="text-white font-medium hover:text-red-400 transition-colors mb-4 text-sm">
+                    <Link to="/products/preworkout" className="text-white font-medium hover:text-red-400 transition-colors mb-4 text-sm">
                       Pre entreno
                     </Link>
-                    <Link to="/products?cat=preworkout" className="block overflow-hidden rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                    <Link to="/products/preworkout" className="block overflow-hidden rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-xl">
                       <img
                         src="https://swsuppss.com/cdn/shop/files/PORTADA_ec4a9ae4-06e4-4fb7-91c0-a61fc19fbed6_1440x1440.jpg?v=1750987008"
                         alt="Pre entreno"
@@ -175,10 +175,10 @@ const Header = () => {
 
                   {/* Aminoácidos */}
                   <div className="flex flex-col items-center text-center group/item">
-                    <Link to="/products?cat=aminoacidos" className="text-white font-medium hover:text-red-400 transition-colors mb-4 text-sm">
+                    <Link to="/products/aminoacidos" className="text-white font-medium hover:text-red-400 transition-colors mb-4 text-sm">
                       Aminoácidos
                     </Link>
-                    <Link to="/products?cat=aminoacidos" className="block overflow-hidden rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                    <Link to="/products/aminoacidos" className="block overflow-hidden rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-xl">
                       <img
                         src="https://swsuppss.com/cdn/shop/files/aminox-30_1440x1440.jpg?v=1721575679"
                         alt="Aminoácidos"
@@ -189,10 +189,10 @@ const Header = () => {
 
                   {/* Vitaminas */}
                   <div className="flex flex-col items-center text-center group/item">
-                    <Link to="/products?cat=vitaminas" className="text-white font-medium hover:text-red-400 transition-colors mb-4 text-sm">
+                    <Link to="/products/vitaminas" className="text-white font-medium hover:text-red-400 transition-colors mb-4 text-sm">
                       Vitaminas
                     </Link>
-                    <Link to="/products?cat=vitaminas" className="block overflow-hidden rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                    <Link to="/products/vitaminas" className="block overflow-hidden rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-xl">
                       <img
                         src="https://swsuppss.com/cdn/shop/files/PORTADA_1_5988643b-a584-41de-bb44-42f3fff9e8c7_1440x1440.jpg?v=1753489463"
                         alt="Vitaminas"
@@ -203,10 +203,10 @@ const Header = () => {
 
                   {/* Para la salud */}
                   <div className="flex flex-col items-center text-center group/item">
-                    <Link to="/products?cat=salud" className="text-white font-medium hover:text-red-400 transition-colors mb-4 text-sm">
+                    <Link to="/products/salud" className="text-white font-medium hover:text-red-400 transition-colors mb-4 text-sm">
                       Para la salud
                     </Link>
-                    <Link to="/products?cat=salud" className="block overflow-hidden rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                    <Link to="/products/salud" className="block overflow-hidden rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-xl">
                       <img
                         src="https://swsuppss.com/cdn/shop/files/PORTADA_2_1440x1440.jpg?v=1743652920"
                         alt="Salud"
@@ -217,10 +217,10 @@ const Header = () => {
 
                   {/* complementos */}
                   <div className="flex flex-col items-center text-center group/item">
-                    <Link to="/products?cat=complementos" className="text-white font-medium hover:text-red-400 transition-colors mb-4 text-sm">
+                    <Link to="/products/complementos" className="text-white font-medium hover:text-red-400 transition-colors mb-4 text-sm">
                       Complementos
                     </Link>
-                    <Link to="/products?cat=complementos" className="block overflow-hidden rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                    <Link to="/products/complementos" className="block overflow-hidden rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-xl">
                       <img
                         src="https://swsuppss.com/cdn/shop/files/PORTADA_7_1440x1440.png?v=1732233658"
                         alt="Complementos"
@@ -231,10 +231,10 @@ const Header = () => {
 
                   {/* Demás / Comida */}
                   <div className="flex flex-col items-center text-center group/item">
-                    <Link to="/products?cat=comida" className="text-white font-medium hover:text-red-400 transition-colors mb-4 text-sm">
+                    <Link to="/products/comida" className="text-white font-medium hover:text-red-400 transition-colors mb-4 text-sm">
                       Comida
                     </Link>
-                    <Link to="/products?cat=comida" className="block overflow-hidden rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                    <Link to="/products/comida" className="block overflow-hidden rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-xl">
                       <img
                         src="https://swsuppss.com/cdn/shop/files/PORTADA_7_1440x1440.png?v=1732233658"
                         alt="Comida"
@@ -263,10 +263,10 @@ const Header = () => {
                 <div className="flex flex-row justify-center gap-10">
                   {/* Shakers */}
                   <div className="flex flex-col items-center text-center group/item">
-                    <Link to="/products?cat=shakers" className="text-white font-medium hover:text-red-400 transition-colors mb-4 text-sm">
+                    <Link to="/products/shakers" className="text-white font-medium hover:text-red-400 transition-colors mb-4 text-sm">
                       Shakers
                     </Link>
-                    <Link to="/products?cat=shakers" className="block overflow-hidden rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                    <Link to="/products/shakers" className="block overflow-hidden rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-xl">
                       <img
                         src="https://swsuppss.com/cdn/shop/files/PORTADA_1_5988643b-a584-41de-bb44-42f3fff9e8c7_1440x1440.jpg?v=1753489463"
                         alt="Shakers"
@@ -276,10 +276,10 @@ const Header = () => {
                   </div>
                   {/* Ropa Deportiva */}
                   <div className="flex flex-col items-center text-center group/item">
-                    <Link to="/products?cat=ropa" className="text-white font-medium hover:text-red-400 transition-colors mb-4 text-sm">
+                    <Link to="/products/ropa" className="text-white font-medium hover:text-red-400 transition-colors mb-4 text-sm">
                       Ropa Deportiva
                     </Link>
-                    <Link to="/products?cat=ropa" className="block overflow-hidden rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                    <Link to="/products/ropa" className="block overflow-hidden rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-xl">
                       <img
                         src="https://swsuppss.com/cdn/shop/files/PORTADA_1_5988643b-a584-41de-bb44-42f3fff9e8c7_1440x1440.jpg?v=1753489463"
                         alt="Ropa Deportiva"
@@ -289,10 +289,10 @@ const Header = () => {
                   </div>
                   {/* Bolsos */}
                   <div className="flex flex-col items-center text-center group/item">
-                    <Link to="/products?cat=bolsos" className="text-white font-medium hover:text-red-400 transition-colors mb-4 text-sm">
+                    <Link to="/products/bolsos" className="text-white font-medium hover:text-red-400 transition-colors mb-4 text-sm">
                       Bolsos
                     </Link>
-                    <Link to="/products?cat=bolsos" className="block overflow-hidden rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                    <Link to="/products/bolsos" className="block overflow-hidden rounded-2xl transition-all duration-300 hover:scale-105 hover:shadow-xl">
                       <img
                         src="https://swsuppss.com/cdn/shop/files/PORTADA_1_5988643b-a584-41de-bb44-42f3fff9e8c7_1440x1440.jpg?v=1753489463"
                         alt="Bolsos"
@@ -313,7 +313,7 @@ const Header = () => {
             Definición
           </Link>
 
-          {user?.role === 'admin' && (
+          {isAuthenticated && user?.role === 'admin' && (
             <Link to="/admin/products" className="text-white font-semibold hover:text-red-400 transition-all duration-300 hover:-translate-y-1">
               Admin
             </Link>
@@ -360,15 +360,6 @@ const Header = () => {
               <path d="M128,128a48,48,0,1,0-48-48A48,48,0,0,0,128,128Zm0,16c-39.7,0-72,32.3-72,72a8,8,0,0,0,8,8H192a8,8,0,0,0,8-8C200,176.3,167.7,144,128,144Z"></path>
             </svg>
           </button>
-          {isAuthenticated && (
-            <button
-              onClick={() => { logout(); navigate('/'); }}
-              className="inline-flex items-center gap-1 text-[11px] font-semibold px-3 py-1.5 rounded-full bg-red-600/80 hover:bg-red-600 text-white shadow transition-colors active:scale-95"
-            >
-              <span className="leading-none">Salir</span>
-            </button>
-          )}
-
           <button onClick={openSearch} className="rounded-full bg-white/10 p-2 hover:bg-red-500/20 hover:scale-110 transition-all duration-300" aria-label="Buscar">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" className="w-5 h-5 text-white" fill="currentColor">
               <path d="M228.24,219.76l-51.38-51.38a86.15,86.15,0,1,0-8.48,8.48l51.38,51.38a6,6,0,0,0,8.48-8.48ZM38,112a74,74,0,1,1,74,74A74.09,74.09,0,0,1,38,112Z"></path>
@@ -380,6 +371,14 @@ const Header = () => {
               <path d="M216,42H40A14,14,0,0,0,26,56V200a14,14,0,0,0,14,14H216a14,14,0,0,0,14-14V56A14,14,0,0,0,216,42Zm2,158a2,2,0,0,1-2,2H40a2,2,0,0,1-2-2V56a2,2,0,0,1,2-2H216a2,2,0,0,1,2,2ZM174,88a46,46,0,0,1-92,0,6,6,0,0,1,12,0,34,34,0,0,0,68,0,6,6,0,0,1,12,0Z"></path>
             </svg>
           </button>
+          {isAuthenticated && (
+            <button
+              onClick={() => { logout(); navigate('/'); }}
+              className="inline-flex items-center gap-1 text-[11px] font-semibold px-3 py-1.5 rounded-full bg-red-600/80 hover:bg-red-600 text-white shadow transition-colors active:scale-95"
+            >
+              <span className="leading-none">Salir</span>
+            </button>
+          )}
         </div>
 
         {/* Menú móvil (solo botón visible, sin panel ya que no se proporcionó HTML) */}

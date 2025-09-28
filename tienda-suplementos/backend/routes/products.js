@@ -20,7 +20,13 @@ router.get('/', async (req, res) => {
 
     const query = {};
     if (category) query.category = category;
-    if (includeInactive !== 'true') query.isActive = true; // por defecto solo activos
+    if (includeInactive !== 'true') {
+      // Incluir productos legacy que no tengan el campo isActive aún, además de los activos
+      query.$or = [
+        { isActive: true },
+        { isActive: { $exists: false } }
+      ];
+    }
     if (minPrice || maxPrice) {
       query.price = {};
       if (minPrice) query.price.$gte = Number(minPrice);
@@ -75,6 +81,13 @@ router.get('/:id', async (req, res) => {
 // POST /api/products (crear) - admin
 router.post('/', protect, isAdmin, async (req, res) => {
   try {
+    // Normalizar variantes y sabores opcionales
+    if (Array.isArray(req.body.variants)) {
+      req.body.variants = req.body.variants.filter(v => v && v.size && v.price !== undefined && v.price !== null);
+    }
+    if (Array.isArray(req.body.flavors)) {
+      req.body.flavors = req.body.flavors.filter(f => typeof f === 'string' && f.trim() !== '');
+    }
     const product = await Product.create(req.body);
     res.status(201).json({ success: true, data: product });
   } catch (error) {
@@ -85,6 +98,12 @@ router.post('/', protect, isAdmin, async (req, res) => {
 // PUT /api/products/:id (actualizar) - admin
 router.put('/:id', protect, isAdmin, async (req, res) => {
   try {
+    if (Array.isArray(req.body.variants)) {
+      req.body.variants = req.body.variants.filter(v => v && v.size && v.price !== undefined && v.price !== null);
+    }
+    if (Array.isArray(req.body.flavors)) {
+      req.body.flavors = req.body.flavors.filter(f => typeof f === 'string' && f.trim() !== '');
+    }
     const product = await Product.findByIdAndUpdate(
       req.params.id,
       req.body,
@@ -99,18 +118,14 @@ router.put('/:id', protect, isAdmin, async (req, res) => {
   }
 });
 
-// DELETE /api/products/:id (soft delete) - admin
+// DELETE /api/products/:id (hard delete) - admin
 router.delete('/:id', protect, isAdmin, async (req, res) => {
   try {
-    const product = await Product.findByIdAndUpdate(
-      req.params.id,
-      { isActive: false },
-      { new: true }
-    );
+    const product = await Product.findByIdAndDelete(req.params.id);
     if (!product) {
       return res.status(404).json({ success: false, message: 'Producto no encontrado' });
     }
-    res.json({ success: true, message: 'Producto desactivado', data: product });
+    res.json({ success: true, message: 'Producto eliminado permanentemente', data: { _id: product._id } });
   } catch (error) {
     res.status(400).json({ success: false, message: error.message });
   }

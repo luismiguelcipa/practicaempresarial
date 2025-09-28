@@ -46,11 +46,13 @@ const authRoutes = require('./routes/auth');
 const productsRoutes = require('./routes/products');
 const paymentsRoutes = require('./routes/payments');
 const ordersRoutes = require('./routes/orders');
+const usersRoutes = require('./routes/users');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/payments', paymentsRoutes);
 app.use('/api/orders', ordersRoutes);
+app.use('/api/users', usersRoutes);
 
 // Ruta de prueba
 app.get('/api/health', (req, res) => {

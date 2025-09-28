@@ -11,15 +11,22 @@ const products = [
     price: 89.99,
     image: '/images/whey-protein.jpg',
     category: 'Proteínas',
+    baseSize: '4 libras',
     description: 'Proteína de suero de leche de alta calidad para recuperación muscular',
     stock: 50,
-    rating: 4.8
+    rating: 4.8,
+    variants: [
+      { size: '2 libras', price: 69.99, image: '/images/whey-protein-2lb.jpg', stock: 25 },
+      { size: '4 libras', price: 129.99, image: '/images/whey-protein-4lb.jpg', stock: 25 }
+    ],
+    flavors: ['Vainilla', 'Chocolate', 'Fresa']
   },
   {
     name: 'Creatina Monohidrato',
     price: 24.99,
     image: '/images/creatine.jpg',
     category: 'Creatina',
+    baseSize: '300g',
     description: 'Creatina pura para aumentar fuerza y masa muscular',
     stock: 40,
     rating: 4.6
@@ -29,6 +36,7 @@ const products = [
     price: 34.99,
     image: '/images/bcaa.jpg',
     category: 'Aminoácidos',
+    baseSize: '250g',
     description: 'Aminoácidos de cadena ramificada para recuperación',
     stock: 30,
     rating: 4.7
@@ -38,6 +46,7 @@ const products = [
     price: 39.99,
     image: '/images/preworkout.jpg',
     category: 'Pre-Workout',
+    baseSize: '30 serv',
     description: 'Energía y concentración para entrenamientos intensos',
     stock: 0,
     rating: 4.5
@@ -47,6 +56,7 @@ const products = [
     price: 19.99,
     image: '/images/omega3.jpg',
     category: 'Vitaminas',
+    baseSize: '120 caps',
     description: 'Aceite de pescado rico en Omega 3 para salud cardiovascular',
     stock: 60,
     rating: 4.4
@@ -56,6 +66,7 @@ const products = [
     price: 29.99,
     image: '/images/multivitamin.jpg',
     category: 'Vitaminas',
+    baseSize: '90 tabs',
     description: 'Complejo vitamínico para deportistas',
     stock: 70,
     rating: 4.3

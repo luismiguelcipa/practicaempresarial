@@ -44,6 +44,24 @@ const userSchema = new mongoose.Schema({
     enum: ['user', 'admin'],
     default: 'user'
   },
+  // Seguridad adicional admin: PIN hash y flag
+  adminPinHash: {
+    type: String,
+    default: null
+  },
+  adminPinEnabled: {
+    type: Boolean,
+    default: false
+  },
+  // Intentos y bloqueo temporal del PIN admin
+  adminPinAttempts: {
+    type: Number,
+    default: 0
+  },
+  adminPinLockedUntil: {
+    type: Date,
+    default: null
+  },
   // Direcciones guardadas
   addresses: [{
     street: String,

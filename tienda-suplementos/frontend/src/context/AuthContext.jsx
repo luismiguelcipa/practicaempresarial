@@ -31,6 +31,26 @@ const authReducer = (state, action) => {
         isAuthenticated: true,
         error: null
       };
+    case 'ADMIN_PIN_PENDING':
+      return {
+        ...state,
+        loading: false,
+        pendingAdminPin: true,
+        tempToken: action.payload.tempToken,
+        user: action.payload.user,
+        isAuthenticated: false,
+        error: null
+      };
+    case 'ADMIN_PIN_SUCCESS':
+      return {
+        ...state,
+        loading: false,
+        pendingAdminPin: false,
+        tempToken: null,
+        user: action.payload.user,
+        isAuthenticated: true,
+        error: null
+      };
     case 'VERIFY_FAILURE':
       return {
         ...state,
@@ -58,7 +78,9 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated: false,
     email: null,
     loading: false,
-    error: null
+  error: null,
+  pendingAdminPin: false,
+  tempToken: null
   });
 
   // Configurar axios con token
@@ -70,20 +92,38 @@ export const AuthProvider = ({ children }) => {
     }
   }, [state.token]);
 
-  // Restaurar usuario desde localStorage (incluye role)
+  // Restaurar sesión verificando el token realmente (evita estado "logueado" falso)
   useEffect(() => {
-    const savedUser = localStorage.getItem('user');
-    if (savedUser && !state.user) {
+    const boot = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) return; // no token => no intento
       try {
-        const parsed = JSON.parse(savedUser);
-        if (parsed && parsed.email) {
-          dispatch({ type: 'LOGIN_SUCCESS', payload: { user: parsed } });
+        // Intentar perfil para validar token
+        const res = await axios.get('/api/auth/profile');
+        if (res.data?.success && res.data.data?.email) {
+          const user = {
+            id: res.data.data._id,
+            email: res.data.data.email,
+            firstName: res.data.data.firstName,
+            lastName: res.data.data.lastName,
+            role: res.data.data.role,
+            isEmailVerified: res.data.data.isEmailVerified
+          };
+          localStorage.setItem('user', JSON.stringify(user));
+          dispatch({ type: 'LOGIN_SUCCESS', payload: { user } });
+        } else {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          dispatch({ type: 'LOGOUT' });
         }
       } catch {
-        // ignorar
+        // Token inválido -> limpiar
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        dispatch({ type: 'LOGOUT' });
       }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    };
+    boot();
   }, []);
 
   const login = async (email) => {
@@ -91,15 +131,18 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await axios.post('/api/auth/login', { email });
       if (response.data.success) {
-        const { token, user } = response.data.data;
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        dispatch({
-          type: 'LOGIN_SUCCESS',
-          payload: { user }
-        });
-        return { success: true, requiresVerification: false };
+        const data = response.data.data;
+        if (data.step === 'ADMIN_PIN_REQUIRED') {
+          dispatch({ type: 'ADMIN_PIN_PENDING', payload: { tempToken: data.tempToken, user: data.user } });
+          return { success: true, adminPinRequired: true };
+        } else {
+          const { token, user } = data;
+          localStorage.setItem('token', token);
+          localStorage.setItem('user', JSON.stringify(user));
+          axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          dispatch({ type: 'LOGIN_SUCCESS', payload: { user } });
+          return { success: true, requiresVerification: false };
+        }
       }
     } catch (error) {
       if (error.response?.status === 401) {
@@ -128,14 +171,18 @@ export const AuthProvider = ({ children }) => {
     dispatch({ type: 'VERIFY_START' });
     try {
       const response = await axios.post('/api/auth/verify-code', { email, code });
-      const { token, user } = response.data.data;
-      localStorage.setItem('token', token);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      dispatch({
-        type: 'VERIFY_SUCCESS',
-        payload: { user }
-      });
-      return { success: true };
+      const data = response.data.data;
+      if (data.step === 'ADMIN_PIN_REQUIRED') {
+        dispatch({ type: 'ADMIN_PIN_PENDING', payload: { tempToken: data.tempToken, user: data.user } });
+        return { success: true, adminPinRequired: true };
+      } else {
+        const { token, user } = data;
+        localStorage.setItem('token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        dispatch({ type: 'VERIFY_SUCCESS', payload: { user } });
+        return { success: true };
+      }
     } catch (error) {
       const message = error?.response?.data?.message || error?.message || 'Error de conexión';
       dispatch({ type: 'VERIFY_FAILURE', payload: message });
@@ -147,6 +194,25 @@ export const AuthProvider = ({ children }) => {
       }, 10000);
     }
   };
+
+  const verifyAdminPin = async (pin) => {
+    if (!state.tempToken) return { success: false, error: 'No hay sesión temporal' };
+    dispatch({ type: 'VERIFY_START' });
+    try {
+      const response = await axios.post('/api/auth/admin/verify-pin', { tempToken: state.tempToken, pin });
+      const { token, user } = response.data.data;
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      dispatch({ type: 'ADMIN_PIN_SUCCESS', payload: { user } });
+      return { success: true };
+    } catch (error) {
+      const message = error?.response?.data?.message || error?.message || 'Error verificando PIN';
+      dispatch({ type: 'VERIFY_FAILURE', payload: message });
+      return { success: false, error: message };
+    }
+  };
+
 
   const resendCode = async (email) => {
     dispatch({ type: 'LOGIN_START' });
@@ -175,6 +241,7 @@ export const AuthProvider = ({ children }) => {
       ...state,
       login,
       verifyCode,
+      verifyAdminPin,
       resendCode,
       logout,
       clearError

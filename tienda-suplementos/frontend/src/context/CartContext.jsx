@@ -6,25 +6,27 @@ const CartContext = createContext();
 const cartReducer = (state, action) => {
   switch (action.type) {
     case 'ADD_TO_CART': {
-      const existingItem = state.items.find((item) => item.id === action.payload.id);
+      // Considerar combinación (id + variantId + flavor) para identificar ítem único
+      const key = `${action.payload.id || action.payload._id || action.payload.productId}::${action.payload.variantId || ''}::${action.payload.flavor || ''}`;
+      const existingItem = state.items.find((item) => item._key === key);
       if (existingItem) {
         return {
           ...state,
           items: state.items.map((item) =>
-            item.id === action.payload.id ? { ...item, quantity: item.quantity + 1 } : item
+            item._key === key ? { ...item, quantity: item.quantity + 1 } : item
           ),
         };
       }
       return {
         ...state,
-        items: [...state.items, { ...action.payload, quantity: 1 }],
+        items: [...state.items, { ...action.payload, quantity: 1, _key: key }],
       };
     }
 
     case 'REMOVE_FROM_CART': {
       return {
         ...state,
-        items: state.items.filter((item) => item.id !== action.payload),
+        items: state.items.filter((item) => item._key !== action.payload),
       };
     }
 
@@ -32,7 +34,7 @@ const cartReducer = (state, action) => {
       return {
         ...state,
         items: state.items.map((item) =>
-          item.id === action.payload.id ? { ...item, quantity: action.payload.quantity } : item
+          item._key === action.payload.id ? { ...item, quantity: action.payload.quantity } : item
         ),
       };
     }
@@ -54,12 +56,12 @@ export const CartProvider = ({ children }) => {
     dispatch({ type: 'ADD_TO_CART', payload: product });
   };
 
-  const removeFromCart = (productId) => {
-    dispatch({ type: 'REMOVE_FROM_CART', payload: productId });
+  const removeFromCart = (key) => {
+    dispatch({ type: 'REMOVE_FROM_CART', payload: key });
   };
 
-  const updateQuantity = (productId, quantity) => {
-    dispatch({ type: 'UPDATE_QUANTITY', payload: { id: productId, quantity } });
+  const updateQuantity = (key, quantity) => {
+    dispatch({ type: 'UPDATE_QUANTITY', payload: { id: key, quantity } });
   };
 
   const clearCart = () => {

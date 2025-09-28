@@ -17,31 +17,44 @@ export default function Profile() {
   const [addrDraft, setAddrDraft] = useState({ street: '', city: '', state: '', zipCode: '', country: '' });
   const [showCompleteHint, setShowCompleteHint] = useState(false);
 
+  // PIN admin management states
+  const [pinSectionOpen, setPinSectionOpen] = useState(false);
+  const [pinLoading, setPinLoading] = useState(false);
+  const [pinMessage, setPinMessage] = useState(null);
+  const [pinError, setPinError] = useState(null);
+  const [pinForm, setPinForm] = useState({ pin: '', oldPin: '', newPin: '', confirmPin: '' });
+  const [pinStatus, setPinStatus] = useState({ enabled: false, attempts: 0, lockedUntil: null });
+
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+      const { data } = await axios.get('/api/auth/profile');
+      setProfile(data.data);
+      setForm({
+        firstName: data.data.firstName || '',
+        lastName: data.data.lastName || '',
+        phone: data.data.phone || ''
+      });
+      setAddresses(data.data.addresses || []);
+      setPinStatus({
+        enabled: !!data.data.adminPinEnabled,
+        attempts: data.data.adminPinAttempts || 0,
+        lockedUntil: data.data.adminPinLockedUntil || null
+      });
+      const incomplete = !data.data.firstName || !data.data.lastName || !data.data.phone;
+      if (incomplete) {
+        setShowCompleteHint(true);
+        setEditing(true);
+      }
+    } catch (e) {
+      setError(e.response?.data?.message || 'Error cargando perfil');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!isAuthenticated) return;
-    const fetchProfile = async () => {
-      try {
-        setLoading(true);
-        const { data } = await axios.get('/api/auth/profile');
-        setProfile(data.data);
-        setForm({
-          firstName: data.data.firstName || '',
-          lastName: data.data.lastName || '',
-          phone: data.data.phone || ''
-        });
-        setAddresses(data.data.addresses || []);
-        // Si faltan datos personales, mostrar hint y abrir edición
-        const incomplete = !data.data.firstName || !data.data.lastName || !data.data.phone;
-        if (incomplete) {
-          setShowCompleteHint(true);
-          setEditing(true);
-        }
-      } catch (e) {
-        setError(e.response?.data?.message || 'Error cargando perfil');
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchProfile();
   }, [isAuthenticated]);
 
@@ -70,6 +83,7 @@ export default function Profile() {
       if (form.firstName && form.lastName && form.phone) {
         setShowCompleteHint(false);
       }
+      fetchProfile();
     } catch (e) {
       setError(e.response?.data?.message || 'Error guardando');
     } finally {
@@ -77,16 +91,61 @@ export default function Profile() {
     }
   };
 
+  // Helpers PIN
+  const remainingLockMs = pinStatus.lockedUntil ? (new Date(pinStatus.lockedUntil).getTime() - Date.now()) : 0;
+  const remainingLockMin = remainingLockMs > 0 ? Math.ceil(remainingLockMs / 60000) : 0;
+
+  const handleSetPin = async () => {
+    setPinError(null); setPinMessage(null); setPinLoading(true);
+    if (!/^\d{4,10}$/.test(pinForm.pin)) { setPinError('PIN debe tener 4-10 dígitos'); setPinLoading(false); return; }
+    try {
+      await axios.post('/api/auth/admin/set-pin', { pin: pinForm.pin });
+      setPinMessage('PIN configurado');
+      setPinForm({ pin: '', oldPin: '', newPin: '', confirmPin: '' });
+      fetchProfile();
+    } catch (e) {
+      setPinError(e.response?.data?.message || 'Error configurando PIN');
+    } finally { setPinLoading(false); }
+  };
+
+  const handleChangePin = async () => {
+    setPinError(null); setPinMessage(null); setPinLoading(true);
+    if (!pinForm.oldPin || !pinForm.newPin || !pinForm.confirmPin) { setPinError('Completa todos los campos'); setPinLoading(false); return; }
+    if (pinForm.newPin !== pinForm.confirmPin) { setPinError('La confirmación no coincide'); setPinLoading(false); return; }
+    if (!/^\d{4,10}$/.test(pinForm.newPin)) { setPinError('Nuevo PIN inválido'); setPinLoading(false); return; }
+    try {
+      await axios.post('/api/auth/admin/change-pin', { oldPin: pinForm.oldPin, newPin: pinForm.newPin });
+      setPinMessage('PIN actualizado');
+      setPinForm({ pin: '', oldPin: '', newPin: '', confirmPin: '' });
+      fetchProfile();
+    } catch (e) {
+      setPinError(e.response?.data?.message || 'Error cambiando PIN');
+    } finally { setPinLoading(false); }
+  };
+
+  const handleDisablePin = async () => {
+    if (!pinForm.pin) { setPinError('Ingresa tu PIN actual para deshabilitar'); return; }
+    setPinLoading(true); setPinError(null); setPinMessage(null);
+    try {
+      await axios.post('/api/auth/admin/disable-pin', { pin: pinForm.pin });
+      setPinMessage('PIN deshabilitado');
+      setPinForm({ pin: '', oldPin: '', newPin: '', confirmPin: '' });
+      fetchProfile();
+    } catch (e) {
+      setPinError(e.response?.data?.message || 'Error deshabilitando PIN');
+    } finally { setPinLoading(false); }
+  };
+
   if (!isAuthenticated) {
     return (
-  <div className="min-h-screen flex items-center justify-center p-6">
+      <div className="min-h-screen flex items-center justify-center p-6">
         <p className="text-sm text-gray-600 bg-white/60 px-4 py-2 rounded">Debes iniciar sesión para ver tu perfil.</p>
       </div>
     );
   }
 
   return (
-  <div className="max-w-4xl mx-auto p-6 space-y-6">
+    <div className="max-w-5xl mx-auto p-6 space-y-6">
       <header className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-800">Mi Perfil</h1>
         <button onClick={logout} className="text-sm text-red-600 hover:underline">Cerrar sesión</button>
@@ -104,9 +163,9 @@ export default function Profile() {
       )}
 
       {!loading && profile && (
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid lg:grid-cols-3 gap-6">
           {/* Datos Básicos */}
-          <section className="md:col-span-2 bg-white rounded-lg shadow p-5 space-y-4">
+          <section className="lg:col-span-2 bg-white rounded-lg shadow p-5 space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="font-semibold text-lg">Datos personales</h2>
               <button onClick={() => setEditing(e => !e)} className="text-xs text-indigo-600 hover:underline">
@@ -174,6 +233,60 @@ export default function Profile() {
             </div>
           </section>
         </div>
+      )}
+
+      {/* PIN Admin Section (solo visible si role admin) */}
+      {!loading && profile?.role === 'admin' && (
+        <section className="bg-white rounded-lg shadow p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-semibold text-lg">Seguridad Administrador (PIN)</h2>
+            <button onClick={() => setPinSectionOpen(o => !o)} className="text-xs text-indigo-600 underline">{pinSectionOpen ? 'Ocultar' : 'Mostrar'}</button>
+          </div>
+          {pinSectionOpen && (
+            <div className="space-y-4 text-sm">
+              <div className="flex flex-wrap gap-2 items-center text-xs">
+                <span className={`px-2 py-0.5 rounded ${pinStatus.enabled ? 'bg-green-100 text-green-700':'bg-gray-200 text-gray-600'}`}>{pinStatus.enabled ? 'PIN habilitado':'PIN no configurado'}</span>
+                {pinStatus.lockedUntil && remainingLockMs > 0 && (
+                  <span className="px-2 py-0.5 rounded bg-red-100 text-red-700">Bloqueado {remainingLockMin}m</span>
+                )}
+                {!pinStatus.lockedUntil && pinStatus.enabled && (
+                  <span className="px-2 py-0.5 rounded bg-yellow-100 text-yellow-700">Intentos fallidos: {pinStatus.attempts}</span>
+                )}
+              </div>
+
+              {pinError && <div className="text-xs text-red-600 bg-red-50 border border-red-200 px-2 py-1 rounded">{pinError}</div>}
+              {pinMessage && <div className="text-xs text-green-600 bg-green-50 border border-green-200 px-2 py-1 rounded">{pinMessage}</div>}
+
+              {!pinStatus.enabled && (
+                <div className="space-y-2">
+                  <p className="text-xs text-gray-600">Configura un PIN numérico para requerir un segundo paso al iniciar sesión como admin.</p>
+                  <input maxLength={10} placeholder="Nuevo PIN (4-10 dígitos)" value={pinForm.pin} onChange={e=>setPinForm(f=>({...f,pin:e.target.value.replace(/[^0-9]/g,'')}))} className="border rounded px-2 py-1 text-xs"/>
+                  <button disabled={pinLoading} onClick={handleSetPin} className="text-xs px-3 py-1 bg-indigo-600 text-white rounded disabled:opacity-50">{pinLoading? 'Guardando...' : 'Guardar PIN'}</button>
+                </div>
+              )}
+
+              {pinStatus.enabled && (
+                <div className="grid md:grid-cols-2 gap-6">
+                  {/* Cambiar PIN */}
+                  <div className="space-y-2">
+                    <h3 className="font-semibold text-sm">Cambiar PIN</h3>
+                    <input placeholder="PIN actual" maxLength={10} value={pinForm.oldPin} onChange={e=>setPinForm(f=>({...f,oldPin:e.target.value.replace(/[^0-9]/g,'')}))} className="border rounded px-2 py-1 text-xs"/>
+                    <input placeholder="Nuevo PIN" maxLength={10} value={pinForm.newPin} onChange={e=>setPinForm(f=>({...f,newPin:e.target.value.replace(/[^0-9]/g,'')}))} className="border rounded px-2 py-1 text-xs"/>
+                    <input placeholder="Confirmar nuevo PIN" maxLength={10} value={pinForm.confirmPin} onChange={e=>setPinForm(f=>({...f,confirmPin:e.target.value.replace(/[^0-9]/g,'')}))} className="border rounded px-2 py-1 text-xs"/>
+                    <button disabled={pinLoading} onClick={handleChangePin} className="text-xs px-3 py-1 bg-indigo-600 text-white rounded disabled:opacity-50">{pinLoading? 'Actualizando...' : 'Actualizar'}</button>
+                  </div>
+                  {/* Deshabilitar PIN */}
+                  <div className="space-y-2">
+                    <h3 className="font-semibold text-sm">Deshabilitar PIN</h3>
+                    <input placeholder="PIN actual" maxLength={10} value={pinForm.pin} onChange={e=>setPinForm(f=>({...f,pin:e.target.value.replace(/[^0-9]/g,'')}))} className="border rounded px-2 py-1 text-xs"/>
+                    <button disabled={pinLoading} onClick={handleDisablePin} className="text-xs px-3 py-1 bg-red-600 text-white rounded disabled:opacity-50">{pinLoading? 'Procesando...' : 'Deshabilitar'}</button>
+                    <p className="text-[10px] text-gray-500">Deshabilitar elimina el segundo factor hasta que configures uno nuevo.</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </section>
       )}
     </div>
   );

@@ -1,7 +1,9 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useContext, useReducer, useState } from 'react';
+import { createContext, useContext, useEffect, useReducer, useState } from 'react';
 
 const CartContext = createContext();
+
+const STORAGE_KEY = 'cart_v1';
 
 const cartReducer = (state, action) => {
   switch (action.type) {
@@ -40,6 +42,8 @@ const cartReducer = (state, action) => {
     }
 
     case 'CLEAR_CART': {
+      // limpiar storage también
+      try { localStorage.removeItem(STORAGE_KEY); } catch {}
       return { ...state, items: [] };
     }
 
@@ -48,8 +52,21 @@ const cartReducer = (state, action) => {
   }
 };
 
+// Inicializador perezoso leyendo de localStorage
+const initFromStorage = (initialState) => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return initialState;
+    const parsed = JSON.parse(raw);
+    if (parsed && Array.isArray(parsed.items)) {
+      return { items: parsed.items };
+    }
+  } catch {}
+  return initialState;
+};
+
 export const CartProvider = ({ children }) => {
-  const [state, dispatch] = useReducer(cartReducer, { items: [] });
+  const [state, dispatch] = useReducer(cartReducer, { items: [] }, initFromStorage);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   const addToCart = (product) => {
@@ -67,6 +84,13 @@ export const CartProvider = ({ children }) => {
   const clearCart = () => {
     dispatch({ type: 'CLEAR_CART' });
   };
+
+  // Persistir carrito en localStorage cuando cambie
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ items: state.items }));
+    } catch {}
+  }, [state.items]);
 
   // UI drawer controls
   const openCart = () => setIsCartOpen(true);

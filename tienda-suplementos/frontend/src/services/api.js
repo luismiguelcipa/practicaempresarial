@@ -35,4 +35,18 @@ api.interceptors.response.use(
   }
 );
 
+// Función para subir imágenes
+export const uploadImage = async (file) => {
+  const formData = new FormData();
+  formData.append('image', file);
+
+  const response = await api.post('/products/upload-image', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+
+  return response.data;
+};
+
 export default api;

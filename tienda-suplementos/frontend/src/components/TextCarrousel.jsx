@@ -2,9 +2,9 @@ import React, { useRef, useEffect, useMemo } from 'react';
 
 // Mensajes base del carrusel
 const ITEMS = [
-  { id: 'envio', text: 'Tu envío es gratis desde $0', icon: 'truck', color: 'text-blue-200' },
-  { id: 'ahorro', text: 'Compra más, ahorra más', icon: 'bag', color: 'text-green-200' },
-  { id: 'combos', text: 'Combos imperdibles HOY', icon: 'lock', color: 'text-yellow-200' }
+  { id: 'envio', text: 'Tu envío es gratis desde $0', icon: 'truck', color: 'text-red-200' },
+  { id: 'ahorro', text: 'Compra más, ahorra más', icon: 'bag', color: 'text-white' },
+  { id: 'combos', text: 'Combos imperdibles HOY', icon: 'lock', color: 'text-red-200' }
 ];
 
 const Icon = ({ name, className }) => {
@@ -28,29 +28,43 @@ const TextCarrousel = ({ speed = 40, offset = 0 }) => {
   const offsetRef = useRef(0);
   const halfWidthRef = useRef(0);
 
-  const duplicated = useMemo(() => [...ITEMS, ...ITEMS], []);
+  const duplicated = useMemo(() => {
+    // Crear múltiples copias para asegurar bucle infinito
+    const multipleCopies = [];
+    for (let i = 0; i < 4; i++) {
+      multipleCopies.push(...ITEMS);
+    }
+    return multipleCopies;
+  }, []);
 
   useEffect(() => {
     const track = trackRef.current;
     if (!track) return;
 
-    // Calcular mitad del ancho (porque duplicamos el contenido)
+    // Calcular mitad del ancho (porque duplicamos el contenido varias veces)
     const computeHalf = () => {
-      // Al duplicar ITEMS una vez, la mitad exacta es scrollWidth / 2 (incluye gaps y paddings)
-      halfWidthRef.current = track.scrollWidth / 2;
+      // Con 4 copias, necesitamos resetear cada 1/4 del contenido total
+      const singleSetWidth = track.scrollWidth / 4;
+      halfWidthRef.current = singleSetWidth;
     };
     computeHalf();
+    // Re-calcular después de un breve delay para asegurar renderizado completo
+    setTimeout(computeHalf, 100);
     window.addEventListener('resize', computeHalf);
 
     let lastTs = performance.now();
     const step = (ts) => {
       const dt = (ts - lastTs) / 1000; // segundos
       lastTs = ts;
-      // avanzar según velocidad
+      
+      // Avanzar según velocidad
       offsetRef.current += speed * dt;
+      
+      // Resetear cuando completamos un ciclo de los elementos base
       if (offsetRef.current >= halfWidthRef.current) {
-        offsetRef.current -= halfWidthRef.current; // reciclar
+        offsetRef.current = offsetRef.current % halfWidthRef.current;
       }
+      
       track.style.transform = `translateX(-${offsetRef.current}px)`;
       reqRef.current = requestAnimationFrame(step);
     };
@@ -77,13 +91,13 @@ const TextCarrousel = ({ speed = 40, offset = 0 }) => {
         <div className="w-full overflow-hidden relative">
           <ul
             ref={trackRef}
-            className="flex gap-10 whitespace-nowrap will-change-transform"
+            className="flex gap-16 whitespace-nowrap will-change-transform"
             style={{ paddingLeft: '1rem' }}
           >
             {duplicated.map((item, idx) => (
               <li key={item.id + '-' + idx} className="flex items-center gap-2">
                 <Icon name={item.icon} className={`w-4 h-4 ${item.color}`} />
-                <span className="text-xs text-gray-300 font-bold">{item.text}</span>
+                <span className="text-xs text-white font-bold">{item.text}</span>
               </li>
             ))}
           </ul>

@@ -20,6 +20,25 @@ const productSchema = new mongoose.Schema({
     required: [true, 'La categoría es requerida'],
     enum: ['Proteínas', 'Creatina', 'Aminoácidos', 'Pre-Workout', 'Vitaminas', 'Otros']
   },
+  // Tipo/Subcategoría (solo para ciertas categorías)
+  tipo: {
+    type: String,
+    trim: true,
+    // Validación condicional según categoría
+    validate: {
+      validator: function(value) {
+        if (this.category === 'Proteínas') {
+          return ['Limpia', 'Hipercalórica', 'Vegana'].includes(value);
+        }
+        if (this.category === 'Creatina') {
+          return ['Monohidrato', 'HCL'].includes(value);
+        }
+        // Para otras categorías, el tipo es opcional
+        return true;
+      },
+      message: 'Tipo no válido para la categoría seleccionada'
+    }
+  },
   // Tamaño base obligatorio (ej: '4 libras', '400g', '30 serv'). Sirve cuando no hay variantes
   baseSize: {
     type: String,

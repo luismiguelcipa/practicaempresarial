@@ -3,13 +3,15 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
+import MPCardPayment from './MPCardPayment';
 
 const SimpleCheckout = () => {
   const { items, getTotalPrice, clearCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('mercadopago');
+  // Dejar por defecto el formulario embebido (Bricks)
+  const [paymentMethod, setPaymentMethod] = useState('card_api');
 
   // Número de WhatsApp (puedes cambiarlo por el tuyo)
   const WHATSAPP_NUMBER = '573006851794'; // Reemplaza con tu número real
@@ -23,7 +25,7 @@ const SimpleCheckout = () => {
             <p className="text-gray-600 mb-6">Agrega algunos productos antes de finalizar tu compra.</p>
             <button
               onClick={() => navigate('/products')}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              className="bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 transition-colors font-medium"
             >
               Ver Productos
             </button>
@@ -67,63 +69,7 @@ const SimpleCheckout = () => {
         navigate('/');
       }, 1000);
 
-    } else if (paymentMethod === 'mercadopago') {
-      try {
-        // Mapear IDs numéricos a ObjectIds reales de MongoDB
-        const idMapping = {
-          1: '68d6f9300bed4514d95710b8', // Whey Protein Premium
-          2: '68d6f9300bed4514d95710b9', // Creatina Monohidrato
-          3: '68d6f9300bed4514d95710ba', // BCAA 2:1:1
-          4: '68d6f9300bed4514d95710bb', // Pre-Workout Energy
-          5: '68d6f9300bed4514d95710bc', // Omega 3 Fish Oil
-          6: '68d6f9300bed4514d95710bd'  // Multivitamínico Completo
-        };
-
-        // Preparar datos de la orden para MercadoPago
-        const orderData = {
-          items: items.map(item => ({
-            productId: idMapping[item.id] || '68d6f9300bed4514d95710b8', // Usar mapeo o ID default
-            quantity: item.quantity,
-            price: item.price
-          })),
-          shippingAddress: {
-            street: 'Dirección por definir',
-            city: 'Ciudad por definir',
-            state: 'Provincia por definir',
-            zipCode: '0000',
-            country: 'Argentina'
-          }
-        };
-
-        console.log('Datos enviados a MercadoPago:', orderData);
-
-        // Crear preferencia de MercadoPago
-        const response = await api.post('/payments/create-preference', orderData);
-        
-        console.log('Respuesta del servidor:', response.data);
-        
-        if (response.data.success) {
-          // Verificar si es modo demo
-          if (response.data.init_point && response.data.init_point.includes('demo-preference')) {
-            alert('🎭 MODO DEMO: MercadoPago funcionará cuando agregues tus credenciales reales.\n\nPara obtener credenciales:\n1. Visita https://developers.mercadopago.com/\n2. Crea una cuenta de desarrollador\n3. Obtén tu Access Token\n4. Reemplázalo en el archivo .env del backend');
-            clearCart();
-            navigate('/');
-          } else {
-            // Redirigir a MercadoPago real
-            clearCart();
-            window.location.href = response.data.init_point;
-          }
-        } else {
-          throw new Error(response.data.message || 'Error al procesar el pago');
-        }
-      } catch (error) {
-        console.error('Error completo con MercadoPago:', error);
-        console.error('Error response:', error.response?.data);
-        alert(`Error al procesar el pago: ${error.response?.data?.message || error.message || 'Error desconocido'}`);
-        setLoading(false);
-      }
-
-    } else if (paymentMethod === 'efectivo') {
+  } else if (paymentMethod === 'efectivo') {
       // Crear mensaje para WhatsApp para pago en efectivo
       const orderDetails = items.map(item => 
         `• ${item.name} x${item.quantity} - $${(item.price * item.quantity).toLocaleString()}`
@@ -178,24 +124,26 @@ const SimpleCheckout = () => {
                 <h2 className="text-xl font-semibold mb-4">Método de Pago</h2>
                 
                 <div className="space-y-3">
-                  <label className="flex items-center cursor-pointer p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                  {/* Dejar sólo Tarjeta en el sitio (API) visible */}
+                  <label className="flex items-center cursor-pointer p-3 border border-gray-200 rounded-lg bg-blue-50 hover:bg-blue-50 transition-colors">
                     <input
                       type="radio"
                       name="paymentMethod"
-                      value="mercadopago"
-                      checked={paymentMethod === 'mercadopago'}
+                      value="card_api"
+                      checked={paymentMethod === 'card_api'}
                       onChange={(e) => setPaymentMethod(e.target.value)}
-                      className="mr-3 text-blue-600"
+                      className="mr-3 text-primary-600"
                     />
                     <div className="flex items-center">
-                      <img 
-                        src="https://http2.mlstatic.com/storage/logos-api-admin/a5f047d0-9be0-11ec-aad4-c3381f368aaf-m.svg" 
-                        alt="MercadoPago"
-                        className="h-8 mr-3"
-                      />
+                      <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                        <svg className="w-4 h-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                          <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                          <line x1="1" y1="10" x2="23" y2="10"></line>
+                        </svg>
+                      </div>
                       <div>
-                        <div className="font-medium">MercadoPago</div>
-                        <div className="text-sm text-gray-600">Tarjetas, efectivo y más</div>
+                        <div className="font-medium">Tarjeta en el sitio (API)</div>
+                        <div className="text-sm text-gray-600">Formulario embebido con Mercado Pago</div>
                       </div>
                     </div>
                   </label>
@@ -207,11 +155,11 @@ const SimpleCheckout = () => {
                       value="transferencia"
                       checked={paymentMethod === 'transferencia'}
                       onChange={(e) => setPaymentMethod(e.target.value)}
-                      className="mr-3 text-blue-600"
+                      className="mr-3 text-primary-600"
                     />
                     <div className="flex items-center">
-                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                        <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center mr-3">
+                        <svg className="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                         </svg>
                       </div>
@@ -229,11 +177,11 @@ const SimpleCheckout = () => {
                       value="efectivo"
                       checked={paymentMethod === 'efectivo'}
                       onChange={(e) => setPaymentMethod(e.target.value)}
-                      className="mr-3 text-blue-600"
+                      className="mr-3 text-primary-600"
                     />
                     <div className="flex items-center">
-                      <div className="w-8 h-8 bg-yellow-100 rounded-full flex items-center justify-center mr-3">
-                        <svg className="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center mr-3">
+                        <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                         </svg>
                       </div>
@@ -246,10 +194,130 @@ const SimpleCheckout = () => {
                 </div>
 
                 {paymentMethod === 'transferencia' && (
-                  <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <p className="text-sm text-green-700">
+                  <div className="mt-4 p-3 bg-primary-50 border border-primary-200 rounded-lg">
+                    <p className="text-sm text-primary-700">
                       <strong>📱 WhatsApp:</strong> Te redirigiremos a WhatsApp donde te enviaremos los datos bancarios para realizar la transferencia.
                     </p>
+                  </div>
+                )}
+
+                {paymentMethod === 'card_api' && (
+                  <div className="mt-4 p-3 border border-gray-200 rounded-lg">
+                    <MPCardPayment
+                      amount={getTotalPrice()}
+                      processPayment={async (cardFormData) => {
+                        // Mapear IDs numéricos a ObjectIds reales de MongoDB
+                        const idMapping = {
+                          1: '68d6f9300bed4514d95710ba',
+                          2: '68d6f9300bed4514d95710bb',
+                          3: '68d6f9300bed4514d95710ba',
+                          4: '68d6f9300bed4514d95710bb',
+                          5: '68d6f9300bed4514d95710bc',
+                          6: '68d6f9300bed4514d95710bd'
+                        };
+
+                        const payload = {
+                          items: items.map(item => ({
+                            productId: idMapping[item.id] || item.id || item._id || '68d6f9300bed4514d95710ba',
+                            quantity: item.quantity
+                          })),
+                          payer: {
+                            email: user.email,
+                            identification: cardFormData.payer?.identification
+                          },
+                          card: {
+                            token: cardFormData.token,
+                            installments: cardFormData.installments,
+                            payment_method_id: cardFormData.payment_method_id,
+                            issuer_id: cardFormData.issuer_id
+                          },
+                          shippingAddress: {
+                            street: 'Dirección por definir',
+                            city: 'Bogotá',
+                            state: 'Cundinamarca',
+                            zipCode: '110111',
+                            country: 'Colombia'
+                          }
+                        };
+
+                        const resp = await api.post('/payments/card', payload);
+                        if (resp.data?.success) {
+                          clearCart();
+                          if (resp.data.payment.status === 'approved') {
+                            navigate('/payment-success');
+                          } else {
+                            navigate('/payment-pending');
+                          }
+                        } else {
+                          throw new Error(resp.data?.message || 'Error procesando pago');
+                        }
+                      }}
+                      onError={(e) => console.error('Brick error', e)}
+                      onFallback={async () => {
+                        try {
+                          // Preparar preferencia y redirigir (plan B)
+                          const idMapping = {
+                            1: '68d6f9300bed4514d95710ba',
+                            2: '68d6f9300bed4514d95710bb',
+                            3: '68d6f9300bed4514d95710ba',
+                            4: '68d6f9300bed4514d95710bb',
+                            5: '68d6f9300bed4514d95710bc',
+                            6: '68d6f9300bed4514d95710bd'
+                          };
+                          const orderData = {
+                            items: items.map(item => ({
+                              productId: idMapping[item.id] || item.id || item._id || '68d6f9300bed4514d95710ba',
+                              quantity: item.quantity,
+                              price: item.price
+                            })),
+                            shippingAddress: { street: 'Dirección por definir', city: 'Bogotá', state: 'Cundinamarca', zipCode: '110111', country: 'Colombia' }
+                          };
+                          const response = await api.post('/payments/create-preference', orderData);
+                          if (response.data?.success && response.data.init_point) {
+                            clearCart();
+                            window.location.href = response.data.init_point;
+                          } else {
+                            alert(response.data?.message || 'No se pudo iniciar Mercado Pago');
+                          }
+                        } catch (err) {
+                          console.error(err);
+                          alert(err.response?.data?.message || err.message || 'Error iniciando Mercado Pago');
+                        }
+                      }}
+                    />
+                    {/* Botón alternativo siempre visible por si el Brick no aparece */}
+                    <div className="mt-3 text-center">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            const idMapping = { 1: '68d6f9300bed4514d95710ba', 2: '68d6f9300bed4514d95710bb', 3: '68d6f9300bed4514d95710ba', 4: '68d6f9300bed4514d95710bb', 5: '68d6f9300bed4514d95710bc', 6: '68d6f9300bed4514d95710bd' };
+                            const orderData = {
+                              items: items.map(item => ({
+                                productId: idMapping[item.id] || item.id || item._id || '68d6f9300bed4514d95710ba',
+                                quantity: item.quantity,
+                                price: item.price
+                              })),
+                              shippingAddress: { street: 'Dirección por definir', city: 'Bogotá', state: 'Cundinamarca', zipCode: '110111', country: 'Colombia' }
+                            };
+                            const response = await api.post('/payments/create-preference', orderData);
+                            if (response.data?.success && response.data.init_point) {
+                              clearCart();
+                              window.location.href = response.data.init_point;
+                            } else {
+                              alert(response.data?.message || 'No se pudo iniciar Mercado Pago');
+                            }
+                          } catch (err) {
+                            console.error(err);
+                            alert(err.response?.data?.message || err.message || 'Error iniciando Mercado Pago');
+                          }
+                        }}
+                        className="inline-block bg-gray-800 text-white py-2 px-4 rounded hover:bg-gray-900"
+                      >
+                        Usar método alternativo (abrir Mercado Pago)
+                      </button>
+                      <p className="text-xs text-gray-500 mt-1">Si el formulario tarda, usa esta opción para continuar.</p>
+                    </div>
                   </div>
                 )}
 
@@ -285,36 +353,23 @@ const SimpleCheckout = () => {
               
               <div className="flex justify-between items-center font-semibold text-lg">
                 <span>Total:</span>
-                <span className="text-green-600">${getTotalPrice().toLocaleString()}</span>
+                <span className="text-primary-600">${getTotalPrice().toLocaleString()}</span>
               </div>
 
               {user && (
                 <>
-                  {paymentMethod === 'mercadopago' && (
-                    <button
-                      onClick={handleCheckout}
-                      disabled={loading}
-                      className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
-                    >
-                      {loading ? (
-                        <div className="flex items-center">
-                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Redirigiendo a MercadoPago...
-                        </div>
-                      ) : (
-                        `Pagar con MercadoPago - $${getTotalPrice().toLocaleString()}`
-                      )}
-                    </button>
+                  {/* Botón de redirección a Mercado Pago oculto */}
+
+                  {/* Mensaje del formulario embebido removido */}
+                  {paymentMethod === 'card_api' && (
+                    <p className="text-center text-sm text-gray-600">Completa los datos y presiona "Pagar ahora" en el formulario</p>
                   )}
 
                   {paymentMethod === 'transferencia' && (
                     <button
                       onClick={handleCheckout}
                       disabled={loading}
-                      className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                      className="w-full bg-gray-800 text-white py-3 px-6 rounded-lg font-semibold hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
                     >
                       {loading ? (
                         <div className="flex items-center">
@@ -365,7 +420,7 @@ const SimpleCheckout = () => {
               {!user && (
                 <button
                   onClick={() => navigate('/login')}
-                  className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+                  className="w-full bg-primary-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-primary-700 transition-colors"
                 >
                   Iniciar Sesión para Continuar
                 </button>

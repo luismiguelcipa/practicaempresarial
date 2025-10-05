@@ -4,7 +4,8 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
-require('dotenv').config();
+// Forzar que .env sobrescriba variables de entorno existentes (evita usar tokens viejos del SO)
+require('dotenv').config({ override: true });
 
 const app = express();
 
@@ -40,6 +41,18 @@ app.use(cors({
 // Body parser
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+
+// Servir archivos estáticos (imágenes subidas)
+const path = require('path');
+app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
+
+// Log inicial (seguro) sobre configuración de MercadoPago
+(() => {
+  const mode = (process.env.MP_MODE || (process.env.NODE_ENV === 'production' ? 'prod' : 'test')).toLowerCase();
+  const token = process.env.MERCADOPAGO_ACCESS_TOKEN || (process.env.NODE_ENV === 'production' ? process.env.MERCADOPAGO_ACCESS_TOKEN_PROD : undefined);
+  const label = token?.startsWith('TEST-') ? 'TEST' : token?.startsWith('APP_USR-') ? 'APP_USR' : token ? 'CUSTOM' : 'NONE';
+  console.log(`[Startup] MP_MODE=${mode} | TOKEN_LABEL=${label}`);
+})();
 
 // Rutas
 const authRoutes = require('./routes/auth');

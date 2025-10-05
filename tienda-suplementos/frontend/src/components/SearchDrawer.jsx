@@ -151,7 +151,7 @@ const SearchDrawer = () => {
                       <div className="text-xs text-gray-500 truncate">
                         {highlight(p.category, q.trim())} • ${p.price}
                         {!p.variants?.length && p.baseSize && (
-                          <span className="ml-1 text-[10px] text-indigo-600">[{p.baseSize}]</span>
+                          <span className="ml-1 text-[10px] text-primary-600">[{p.baseSize}]</span>
                         )}
                       </div>
                     </div>

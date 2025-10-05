@@ -36,11 +36,11 @@ const TestCartPage = () => {
                 <div key={product.id} className="border rounded-lg p-4 flex justify-between items-center">
                   <div>
                     <h3 className="font-medium">{product.name}</h3>
-                    <p className="text-green-600 font-semibold">${product.price.toLocaleString()}</p>
+                    <p className="text-primary-600 font-semibold">${product.price.toLocaleString()}</p>
                   </div>
                   <button
                     onClick={() => addToCart(product)}
-                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+                    className="bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 transition-colors"
                   >
                     Agregar
                   </button>
@@ -90,14 +90,14 @@ const TestCartPage = () => {
                 <div className="border-t pt-4">
                   <div className="flex justify-between items-center mb-4">
                     <span className="text-lg font-semibold">Total:</span>
-                    <span className="text-xl font-bold text-green-600">
+                    <span className="text-xl font-bold text-primary-600">
                       ${getTotalPrice().toLocaleString()}
                     </span>
                   </div>
                   
                   <Link
                     to="/checkout"
-                    className="w-full bg-green-600 text-white py-3 px-6 rounded-lg font-semibold hover:bg-green-700 transition-colors block text-center"
+                    className="w-full bg-gray-800 text-white py-3 px-6 rounded-lg font-semibold hover:bg-gray-900 transition-colors block text-center"
                   >
                     Ir a Checkout
                   </Link>

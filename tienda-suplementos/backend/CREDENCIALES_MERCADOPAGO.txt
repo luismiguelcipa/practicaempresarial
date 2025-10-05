@@ -1,0 +1,9 @@
+# Reemplaza estas líneas en tu archivo .env con las credenciales correctas:
+
+# MercadoPago Configuration (MODO TEST PARA PRUEBAS)
+MERCADOPAGO_ACCESS_TOKEN=TEST-[TU_ACCESS_TOKEN_AQUI]
+MERCADOPAGO_PUBLIC_KEY=TEST-[TU_PUBLIC_KEY_AQUI]
+
+# Ejemplo de cómo deberían verse:
+# MERCADOPAGO_ACCESS_TOKEN=TEST-1234567890123456-101010-abcd1234efgh5678ijkl9012mnop3456-123456789
+# MERCADOPAGO_PUBLIC_KEY=TEST-abcd1234-efgh-5678-ijkl-9012mnop3456

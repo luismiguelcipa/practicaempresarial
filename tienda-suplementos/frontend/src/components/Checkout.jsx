@@ -19,7 +19,7 @@ const Checkout = () => {
     city: '',
     state: '',
     zipCode: '',
-    country: 'Argentina'
+    country: 'Colombia'
   });
 
   const [paymentMethod, setPaymentMethod] = useState('mercadopago');
@@ -85,6 +85,18 @@ const Checkout = () => {
         const response = await api.post('/payments/create-preference', orderData);
         
         if (response.data.success) {
+          // Debug temporal: mostrar datos clave antes de redirigir
+          const info = {
+            init_point: response.data.init_point,
+            init_point_host: response.data.init_point_host,
+            currency: response.data.currency,
+            tokenLabel: response.data.tokenLabel,
+            preferenceId: response.data.preferenceId,
+          };
+          // Imprime en consola y muestra alert para poder copiar
+          console.log('MP preference response:', response.data, info);
+          try { alert('Mercado Pago (debug)\n' + JSON.stringify(info, null, 2)); } catch (e) {}
+
           // Redirigir a MercadoPago
           window.location.href = response.data.init_point;
         } else {
@@ -181,7 +193,7 @@ const Checkout = () => {
                     value={shippingData.city}
                     onChange={handleInputChange}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Ej: Buenos Aires"
+                    placeholder="Ej: Bogotá"
                     required
                   />
                 </div>
@@ -196,7 +208,7 @@ const Checkout = () => {
                     value={shippingData.state}
                     onChange={handleInputChange}
                     className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Ej: CABA"
+                    placeholder="Ej: Cundinamarca"
                     required
                   />
                 </div>

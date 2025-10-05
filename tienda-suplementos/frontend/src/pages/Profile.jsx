@@ -153,7 +153,7 @@ export default function Profile() {
 
       {loading && <p className="text-sm text-gray-500">Cargando...</p>}
       {error && <div className="text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded">{error}</div>}
-      {message && <div className="text-sm text-green-600 bg-green-50 border border-green-200 px-3 py-2 rounded">{message}</div>}
+      {message && <div className="text-sm text-primary-600 bg-primary-50 border border-primary-200 px-3 py-2 rounded">{message}</div>}
       {!loading && showCompleteHint && (
         <div className="flex items-center gap-3 text-xs bg-amber-50 border border-amber-200 text-amber-700 px-4 py-2 rounded shadow-sm">
           <span className="inline-block w-2 h-2 bg-amber-400 rounded-full animate-pulse" aria-hidden="true" />
@@ -177,9 +177,9 @@ export default function Profile() {
                 <label className="block text-xs font-medium text-gray-500">Email</label>
                 <p className="text-sm font-mono break-all">{profile.email}</p>
                 {profile.isEmailVerified ? (
-                  <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded bg-green-100 text-green-700">Verificado</span>
+                  <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded bg-primary-100 text-primary-700">Verificado</span>
                 ) : (
-                  <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded bg-yellow-100 text-yellow-700">No verificado</span>
+                  <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded bg-gray-100 text-gray-700">No verificado</span>
                 )}
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -215,7 +215,7 @@ export default function Profile() {
                   <p className="font-medium">{addr.street}</p>
                   <p className="text-[10px] text-gray-600">{addr.city} {addr.state} {addr.zipCode} {addr.country}</p>
                   <div className="flex justify-between items-center mt-1">
-                    <button onClick={() => setDefaultAddress(i)} className={`text-[10px] px-2 py-0.5 rounded ${addr.isDefault? 'bg-green-600 text-white':'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>{addr.isDefault? 'Default':'Hacer default'}</button>
+                    <button onClick={() => setDefaultAddress(i)} className={`text-[10px] px-2 py-0.5 rounded ${addr.isDefault? 'bg-primary-600 text-white':'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>{addr.isDefault? 'Default':'Hacer default'}</button>
                     <button onClick={() => removeAddress(i)} className="text-[10px] text-red-600 hover:underline">Eliminar</button>
                   </div>
                 </li>
@@ -245,17 +245,17 @@ export default function Profile() {
           {pinSectionOpen && (
             <div className="space-y-4 text-sm">
               <div className="flex flex-wrap gap-2 items-center text-xs">
-                <span className={`px-2 py-0.5 rounded ${pinStatus.enabled ? 'bg-green-100 text-green-700':'bg-gray-200 text-gray-600'}`}>{pinStatus.enabled ? 'PIN habilitado':'PIN no configurado'}</span>
+                <span className={`px-2 py-0.5 rounded ${pinStatus.enabled ? 'bg-primary-100 text-primary-700':'bg-gray-200 text-gray-600'}`}>{pinStatus.enabled ? 'PIN habilitado':'PIN no configurado'}</span>
                 {pinStatus.lockedUntil && remainingLockMs > 0 && (
                   <span className="px-2 py-0.5 rounded bg-red-100 text-red-700">Bloqueado {remainingLockMin}m</span>
                 )}
                 {!pinStatus.lockedUntil && pinStatus.enabled && (
-                  <span className="px-2 py-0.5 rounded bg-yellow-100 text-yellow-700">Intentos fallidos: {pinStatus.attempts}</span>
+                  <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-700">Intentos fallidos: {pinStatus.attempts}</span>
                 )}
               </div>
 
               {pinError && <div className="text-xs text-red-600 bg-red-50 border border-red-200 px-2 py-1 rounded">{pinError}</div>}
-              {pinMessage && <div className="text-xs text-green-600 bg-green-50 border border-green-200 px-2 py-1 rounded">{pinMessage}</div>}
+              {pinMessage && <div className="text-xs text-primary-600 bg-primary-50 border border-primary-200 px-2 py-1 rounded">{pinMessage}</div>}
 
               {!pinStatus.enabled && (
                 <div className="space-y-2">

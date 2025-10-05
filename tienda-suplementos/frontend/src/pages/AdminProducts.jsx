@@ -3,6 +3,15 @@ import axios from '../utils/axios';
 import { useAuth } from '../context/AuthContext';
 import ProductForm from '../components/admin/ProductForm';
 
+// Lista completa de categorías (versión original)
+const ALL_CATEGORIES = ['Proteínas','Creatina','Aminoácidos','Pre-Workout','Vitaminas','Otros'];
+
+// Tipos/Subcategorías por categoría
+const CATEGORY_TYPES = {
+  'Proteínas': ['Limpia', 'Hipercalórica', 'Vegana'],
+  'Creatina': ['Monohidrato', 'HCL']
+};
+
 // Página administración de productos con selección previa de categoría
 export default function AdminProducts() {
   const { isAuthenticated, user } = useAuth();
@@ -13,6 +22,7 @@ export default function AdminProducts() {
   const [editing, setEditing] = useState(null); // producto en edición
   const [saving, setSaving] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null); // nueva: categoría elegida
+  const [selectedType, setSelectedType] = useState(null); // subcategoría/tipo elegido
   const [search, setSearch] = useState('');
   // Usuarios
   const [users, setUsers] = useState([]);
@@ -20,7 +30,7 @@ export default function AdminProducts() {
   const [usersError, setUsersError] = useState(null);
   const [showUsers, setShowUsers] = useState(false);
 
-  const emptyProduct = { name:'', description:'', price:'', category:'Proteínas', image:'', stock:0, isActive:true, baseSize:'', variants:[], flavors:[] };
+  const emptyProduct = { name:'', description:'', price:'', category:'Proteínas', tipo:'', image:'', stock:0, isActive:true, baseSize:'', variants:[], flavors:[] };
   const [form, setForm] = useState(emptyProduct);
 
   const fetchProducts = async () => {
@@ -56,10 +66,11 @@ export default function AdminProducts() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showUsers]);
 
-  // Derivar categorías únicas
+  // Derivar categorías únicas asegurando mostrar todas las soportadas (aunque tengan 0 productos)
   const categories = useMemo(() => {
     const set = new Set(products.map(p => p.category || 'Sin categoría'));
-    return Array.from(set).sort();
+    ALL_CATEGORIES.forEach(c => set.add(c));
+    return ALL_CATEGORIES.filter(c => set.has(c)); // preserva orden lógico definido arriba
   }, [products]);
 
   const filteredProducts = useMemo(() => {
@@ -67,20 +78,61 @@ export default function AdminProducts() {
     if (selectedCategory) {
       list = list.filter(p => (p.category || 'Sin categoría') === selectedCategory);
     }
+    // Filtrar por tipo/subcategoría si está seleccionado
+    if (selectedType) {
+      list = list.filter(p => {
+        const productType = p.tipo || (p.category === 'Proteínas' ? 'Limpia' : p.category === 'Creatina' ? 'Monohidrato' : null);
+        return productType === selectedType;
+      });
+    }
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       list = list.filter(p => p.name?.toLowerCase().includes(q));
     }
     return list;
-  }, [products, selectedCategory, search]);
+  }, [products, selectedCategory, selectedType, search]);
 
-  const openCreate = () => { setEditing(null); setForm({ ...emptyProduct, category: selectedCategory || emptyProduct.category }); setModalOpen(true); };
+  // Manejar selección de categoría
+  const handleCategorySelect = (cat) => {
+    setSelectedCategory(cat);
+    setSelectedType(null); // Resetear tipo al cambiar categoría
+    setSearch(''); // Limpiar búsqueda
+  };
+
+  // Manejar selección de tipo/subcategoría
+  const handleTypeSelect = (type) => {
+    setSelectedType(type);
+  };
+
+  // Volver al panel de categorías
+  const backToCategories = () => {
+    setSelectedCategory(null);
+    setSelectedType(null);
+    setSearch('');
+  };
+
+  // Volver al panel de tipos (solo si estamos en una subcategoría)
+  const backToTypes = () => {
+    setSelectedType(null);
+    setSearch('');
+  };
+
+  const openCreate = () => { 
+    setEditing(null); 
+    setForm({ 
+      ...emptyProduct, 
+      category: selectedCategory || emptyProduct.category,
+      tipo: selectedType || '' 
+    }); 
+    setModalOpen(true); 
+  };
 
   const openEdit = (p) => { setEditing(p); setForm({
     name: p.name || '',
     description: p.description || '',
     price: p.price ?? '',
     category: p.category || 'Proteínas',
+    tipo: p.tipo || '',
     image: p.image || '',
     stock: p.stock ?? 0,
     isActive: p.isActive,
@@ -145,7 +197,7 @@ export default function AdminProducts() {
             return (
               <button
                 key={cat}
-                onClick={() => setSelectedCategory(cat)}
+                onClick={() => handleCategorySelect(cat)}
                 className="group relative p-4 rounded-lg border bg-white shadow-sm hover:shadow transition flex flex-col text-left"
               >
                 <span className="text-base font-semibold text-gray-800 group-hover:text-indigo-600">{cat}</span>
@@ -213,16 +265,189 @@ export default function AdminProducts() {
             </div>
           )}
         </section>
+
+        {/* Modal de creación/edición de producto */}
+        {modalOpen && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 space-y-4 relative max-h-[90vh] overflow-y-auto">
+              <h2 className="text-lg font-semibold mb-2">{editing? 'Editar Producto':'Nuevo Producto'}</h2>
+              <ProductForm
+                initialValue={form}
+                saving={saving}
+                editingMode={!!editing}
+                onCancel={()=>setModalOpen(false)}
+                onSave={saveProduct}
+              />
+            </div>
+          </div>
+        )}
       </div>
     );
   }
 
-  // Vista 2: Tabla filtrada por categoría seleccionada
+  // Vista 2: Selección de tipo/subcategoría (solo para Proteínas y Creatina)
+  const categoryHasTypes = CATEGORY_TYPES[selectedCategory];
+  if (categoryHasTypes && !selectedType) {
+    return (
+      <div className="pt-24 md:pt-28 p-6 max-w-5xl mx-auto space-y-12">
+        <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+          <div>
+            <button 
+              onClick={backToCategories}
+              className="text-xs text-indigo-600 hover:underline mb-2 flex items-center gap-1"
+            >
+              ← Volver a categorías
+            </button>
+            <h1 className="text-2xl font-bold mb-1">Categoría: {selectedCategory}</h1>
+            <p className="text-sm text-gray-600">Selecciona un tipo para gestionar sus productos.</p>
+          </div>
+          
+          {/* Botones de acción */}
+          <div className="flex gap-3 items-center">
+            {/* Botón rojo para volver */}
+            <button 
+              onClick={backToCategories}
+              className="bg-white text-center border w-48 rounded-2xl h-10 relative text-black text-xl font-semibold group"
+              type="button"
+            >
+              <div className="bg-red-700 rounded-xl h-8 w-1/4 flex items-center justify-center absolute left-1 top-[4px] group-hover:w-[184px] z-10 duration-500">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 1024 1024"
+                  height="25px"
+                  width="25px"
+                >
+                  <path
+                    d="M224 480h640a32 32 0 1 1 0 64H224a32 32 0 0 1 0-64z"
+                    fill="#ffffffff"
+                  ></path>
+                  <path
+                    d="m237.248 512 265.408 265.344a32 32 0 0 1-45.312 45.312l-288-288a32 32 0 0 1 0-45.312l288-288a32 32 0 1 1 45.312 45.312L237.248 512z"
+                    fill="#ffffffff"
+                  ></path>
+                </svg>
+              </div>
+              <p className="translate-x-2">Categorias</p>
+            </button>
+
+            {/* Botón verde para agregar (aunque no se usará aquí, se mantiene el diseño) */}
+            <button
+              onClick={openCreate}
+              title="Agregar Nuevo Producto"
+              className="group cursor-pointer outline-none duration-300 hover:rotate-90 p-0 bg-transparent"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="50px"
+                height="50px"
+                viewBox="0 0 24 24"
+                className="stroke-green-400 fill-none group-hover:fill-green-800 group-active:stroke-green-200 group-active:fill-green-600 group-active:duration-0 duration-300"
+              >
+                <path
+                  d="M12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2C6.5 2 2 6.5 2 12C2 17.5 6.5 22 12 22Z"
+                  strokeWidth="1.5"
+                ></path>
+                <path d="M8 12H16" strokeWidth="1.5"></path>
+                <path d="M12 16V8" strokeWidth="1.5"></path>
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-4">
+          {categoryHasTypes.map(tipo => {
+            // Conteos por tipo
+            const productosEnCategoria = products.filter(p => p.category === selectedCategory);
+            const total = productosEnCategoria.filter(p => {
+              const productType = p.tipo || (selectedCategory === 'Proteínas' ? 'Limpia' : 'Monohidrato');
+              return productType === tipo;
+            }).length;
+            const activos = productosEnCategoria.filter(p => {
+              const productType = p.tipo || (selectedCategory === 'Proteínas' ? 'Limpia' : 'Monohidrato');
+              return productType === tipo && p.isActive;
+            }).length;
+            const inactivos = total - activos;
+            const sinStock = productosEnCategoria.filter(p => {
+              const productType = p.tipo || (selectedCategory === 'Proteínas' ? 'Limpia' : 'Monohidrato');
+              return productType === tipo && p.stock === 0;
+            }).length;
+
+            return (
+              <button
+                key={tipo}
+                onClick={() => handleTypeSelect(tipo)}
+                className="group relative p-4 rounded-lg border bg-white shadow-sm hover:shadow transition flex flex-col text-left"
+              >
+                <span className="text-base font-semibold text-gray-800 group-hover:text-indigo-600">{tipo}</span>
+                <span className="text-xs text-gray-500 mt-1">{total} producto{total!==1?'s':''}</span>
+                <div className="mt-3 flex flex-wrap gap-2 text-[10px]">
+                  <span className="px-2 py-0.5 rounded bg-green-100 text-green-700">Activos {activos}</span>
+                  {inactivos>0 && <span className="px-2 py-0.5 rounded bg-yellow-100 text-yellow-700">Inactivos {inactivos}</span>}
+                  {sinStock>0 && <span className="px-2 py-0.5 rounded bg-red-100 text-red-700">Sin stock {sinStock}</span>}
+                </div>
+                <span className="mt-4 inline-block text-xs text-indigo-600 font-medium group-hover:underline">Administrar →</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Modal de creación/edición de producto */}
+        {modalOpen && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg shadow-lg w-full max-w-lg p-6 space-y-4 relative max-h-[90vh] overflow-y-auto">
+              <h2 className="text-lg font-semibold mb-2">{editing? 'Editar Producto':'Nuevo Producto'}</h2>
+              <ProductForm
+                initialValue={form}
+                saving={saving}
+                editingMode={!!editing}
+                onCancel={()=>setModalOpen(false)}
+                onSave={saveProduct}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Vista 3: Tabla filtrada por categoría y tipo seleccionados
   return (
     <div className="pt-24 md:pt-28 p-6 max-w-7xl mx-auto space-y-6">
       <header className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold">Categoría: {selectedCategory}</h1>
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-2 text-xs mb-2">
+            <button 
+              onClick={backToCategories}
+              className="text-indigo-600 hover:underline"
+            >
+              Categorías
+            </button>
+            {categoryHasTypes && (
+              <>
+                <span className="text-gray-400">›</span>
+                <button 
+                  onClick={backToTypes}
+                  className="text-indigo-600 hover:underline"
+                >
+                  {selectedCategory}
+                </button>
+                <span className="text-gray-400">›</span>
+                <span className="text-gray-700 font-medium">{selectedType}</span>
+              </>
+            )}
+            {!categoryHasTypes && (
+              <>
+                <span className="text-gray-400">›</span>
+                <span className="text-gray-700 font-medium">{selectedCategory}</span>
+              </>
+            )}
+          </div>
+          
+          <h1 className="text-2xl font-bold">
+            {selectedCategory}
+            {selectedType && <span className="text-indigo-600"> - {selectedType}</span>}
+          </h1>
           <p className="text-xs text-gray-500">Mostrando {filteredProducts.length} producto{filteredProducts.length!==1?'s':''}</p>
         </div>
   <div className="flex flex-wrap gap-3 items-center mt-2">
@@ -254,7 +479,8 @@ export default function AdminProducts() {
           
           </div>
     {/* Botón para volver a la vista anterior */}
-<button onClick={() => setSelectedCategory(null)}
+<button 
+  onClick={() => categoryHasTypes ? backToTypes() : backToCategories()}
   className="bg-white text-center border  w-48 rounded-2xl h-10 relative text-black text-xl font-semibold group"
   type="button"
 >
@@ -277,7 +503,7 @@ export default function AdminProducts() {
       ></path>
     </svg>
   </div>
-  <p className="translate-x-2">Categorias</p>
+  <p className="translate-x-2">{categoryHasTypes ? selectedCategory : 'Categorias'}</p>
 </button>
 {/* Botón para agregar un nuevo producto */}
           <button
@@ -409,6 +635,7 @@ export default function AdminProducts() {
             <ProductForm
               initialValue={form}
               saving={saving}
+              editingMode={!!editing}
               onCancel={()=>setModalOpen(false)}
               onSave={saveProduct}
             />

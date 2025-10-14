@@ -6,6 +6,7 @@ import './index.css'
 import { CartProvider } from './context/CartContext'
 import { UIProvider } from './context/UIContext'
 import { AuthProvider } from './context/AuthContext'
+import ClearStorage from './components/ClearStorage'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
@@ -13,6 +14,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <CartProvider>
         <UIProvider>
           <BrowserRouter>
+            <ClearStorage />
             <App />
           </BrowserRouter>
         </UIProvider>

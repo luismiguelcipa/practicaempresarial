@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+﻿const mongoose = require('mongoose');
 
 const orderSchema = new mongoose.Schema({
   user: {
@@ -35,19 +35,19 @@ const orderSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['mercadopago', 'transferencia', 'efectivo'],
-    default: 'mercadopago'
+    enum: ['wompi', 'wompi_card', 'transferencia', 'efectivo'],
+    default: 'wompi'
   },
   paymentStatus: {
     type: String,
-    enum: ['pending', 'approved', 'rejected', 'cancelled'],
+    enum: ['pending', 'approved', 'rejected', 'cancelled', 'APPROVED', 'DECLINED', 'VOIDED'],
     default: 'pending'
   },
-  mercadoPagoPaymentId: {
+  wompiTransactionId: {
     type: String,
     default: null
   },
-  mercadoPagoPreferenceId: {
+  wompiReference: {
     type: String,
     default: null
   },

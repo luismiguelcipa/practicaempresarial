@@ -96,6 +96,26 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const boot = async () => {
       const token = localStorage.getItem('token');
+      const savedUser = localStorage.getItem('user');
+      
+      // Si hay un usuario guardado y es admin, NO restaurar sesión (por seguridad)
+      if (savedUser) {
+        try {
+          const userData = JSON.parse(savedUser);
+          if (userData.role === 'admin') {
+            // Limpiar cualquier token de admin que pueda estar guardado
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            return;
+          }
+        } catch {
+          // JSON inválido, limpiar
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          return;
+        }
+      }
+      
       if (!token) return; // no token => no intento
       try {
         // Intentar perfil para validar token
@@ -109,6 +129,13 @@ export const AuthProvider = ({ children }) => {
             role: res.data.data.role,
             isEmailVerified: res.data.data.isEmailVerified
           };
+          // Verificar nuevamente que no sea admin (por seguridad extra)
+          if (user.role === 'admin') {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            dispatch({ type: 'LOGOUT' });
+            return;
+          }
           localStorage.setItem('user', JSON.stringify(user));
           dispatch({ type: 'LOGIN_SUCCESS', payload: { user } });
         } else {
@@ -137,8 +164,12 @@ export const AuthProvider = ({ children }) => {
           return { success: true, adminPinRequired: true };
         } else {
           const { token, user } = data;
-          localStorage.setItem('token', token);
-          localStorage.setItem('user', JSON.stringify(user));
+          // Solo guardar token en localStorage si NO es admin
+          // Los admins deben autenticarse cada vez (por seguridad)
+          if (user.role !== 'admin') {
+            localStorage.setItem('token', token);
+            localStorage.setItem('user', JSON.stringify(user));
+          }
           axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           dispatch({ type: 'LOGIN_SUCCESS', payload: { user } });
           return { success: true, requiresVerification: false };
@@ -177,8 +208,11 @@ export const AuthProvider = ({ children }) => {
         return { success: true, adminPinRequired: true };
       } else {
         const { token, user } = data;
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(user));
+        // Solo guardar token si NO es admin
+        if (user.role !== 'admin') {
+          localStorage.setItem('token', token);
+          localStorage.setItem('user', JSON.stringify(user));
+        }
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         dispatch({ type: 'VERIFY_SUCCESS', payload: { user } });
         return { success: true };
@@ -201,8 +235,8 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await axios.post('/api/auth/admin/verify-pin', { tempToken: state.tempToken, pin });
       const { token, user } = response.data.data;
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
+      // NO guardar token de admin en localStorage (por seguridad)
+      // El admin debe autenticarse en cada sesión
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       dispatch({ type: 'ADMIN_PIN_SUCCESS', payload: { user } });
       return { success: true };
@@ -229,6 +263,8 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    delete axios.defaults.headers.common['Authorization'];
     dispatch({ type: 'LOGOUT' });
   };
 

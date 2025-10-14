@@ -7,7 +7,8 @@ export const products = [
       category: "Proteínas",
       description: "Proteína de suero de leche de alta calidad para recuperación muscular",
       inStock: true,
-      rating: 4.8
+      rating: 4.8,
+      objetivo: "Volumen"
     },
     {
       id: 2,
@@ -17,7 +18,8 @@ export const products = [
       category: "Creatina",
       description: "Creatina pura para aumentar fuerza y masa muscular",
       inStock: true,
-      rating: 4.6
+      rating: 4.6,
+      objetivo: "Volumen"
     },
     {
       id: 3,
@@ -27,7 +29,8 @@ export const products = [
       category: "Aminoácidos",
       description: "Aminoácidos de cadena ramificada para recuperación",
       inStock: true,
-      rating: 4.7
+      rating: 4.7,
+      objetivo: "Definición"
     },
     {
       id: 4,
@@ -37,7 +40,8 @@ export const products = [
       category: "Pre-Workout",
       description: "Energía y concentración para entrenamientos intensos",
       inStock: false,
-      rating: 4.5
+      rating: 4.5,
+      objetivo: "Definición"
     },
     {
       id: 5,
@@ -47,7 +51,8 @@ export const products = [
       category: "Vitaminas",
       description: "Aceite de pescado rico en Omega 3 para salud cardiovascular",
       inStock: true,
-      rating: 4.4
+      rating: 4.4,
+      objetivo: "Definición"
     },
     {
       id: 6,
@@ -57,6 +62,7 @@ export const products = [
       category: "Vitaminas",
       description: "Complejo vitamínico para deportistas",
       inStock: true,
-      rating: 4.3
+      rating: 4.3,
+      objetivo: "Volumen"
     }
   ];

@@ -58,6 +58,7 @@ export default function QuickAddModal({ product, open, onClose }) {
     addToCart({
       ...product,
       price: displayPrice,
+      originalPrice: product.originalPrice || null,
       image: displayImage,
       variantId: selectedSize && !selectedSize.__isBase ? selectedSize._id : null,
       size: selectedSize ? selectedSize.size : (product.baseSize || null),

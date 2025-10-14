@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../services/api';
+import api from '../services/api';
 import Alert from './Alert';
 
 const Checkout = () => {
@@ -22,7 +22,7 @@ const Checkout = () => {
     country: 'Colombia'
   });
 
-  const [paymentMethod, setPaymentMethod] = useState('mercadopago');
+  const [paymentMethod, setPaymentMethod] = useState('wompi');
 
   // Validar formulario
   const validateForm = () => {
@@ -80,25 +80,30 @@ const Checkout = () => {
         totalAmount: getTotalPrice()
       };
 
-      if (paymentMethod === 'mercadopago') {
-        // Crear preferencia de MercadoPago
-        const response = await api.post('/payments/create-preference', orderData);
+      if (paymentMethod === 'wompi') {
+        // Crear transacción con Wompi
+        const response = await api.post('/payments/create-wompi-transaction', {
+          ...orderData,
+          customerData: {
+            email: user.email,
+            fullName: `${user.firstName} ${user.lastName}`,
+            phoneNumber: user.phoneNumber || '',
+            legalId: user.legalId || '',
+            legalIdType: user.legalIdType || 'CC'
+          }
+        });
         
         if (response.data.success) {
-          // Debug temporal: mostrar datos clave antes de redirigir
-          const info = {
-            init_point: response.data.init_point,
-            init_point_host: response.data.init_point_host,
-            currency: response.data.currency,
-            tokenLabel: response.data.tokenLabel,
-            preferenceId: response.data.preferenceId,
-          };
-          // Imprime en consola y muestra alert para poder copiar
-          console.log('MP preference response:', response.data, info);
-          try { alert('Mercado Pago (debug)\n' + JSON.stringify(info, null, 2)); } catch (e) {}
-
-          // Redirigir a MercadoPago
-          window.location.href = response.data.init_point;
+          // Guardar datos de la orden para usar después
+          localStorage.setItem('pendingOrderId', response.data.orderId);
+          
+          // Redirigir a página de pago con Wompi
+          navigate('/wompi-payment', { 
+            state: { 
+              wompiData: response.data.wompiData,
+              orderId: response.data.orderId 
+            }
+          });
         } else {
           throw new Error(response.data.message || 'Error al procesar el pago');
         }
@@ -256,20 +261,20 @@ const Checkout = () => {
                 <input
                   type="radio"
                   name="paymentMethod"
-                  value="mercadopago"
-                  checked={paymentMethod === 'mercadopago'}
+                  value="wompi"
+                  checked={paymentMethod === 'wompi'}
                   onChange={(e) => setPaymentMethod(e.target.value)}
                   className="mr-3 text-blue-600"
                 />
                 <div className="flex items-center">
                   <img 
-                    src="https://http2.mlstatic.com/storage/logos-api-admin/a5f047d0-9be0-11ec-aad4-c3381f368aaf-m.svg" 
-                    alt="MercadoPago"
+                    src="https://uploads-ssl.webflow.com/6408f1840a6edf5ad1ca06f8/640963a0dd4c3e50c3f57da3_wompi-logo.svg" 
+                    alt="Wompi"
                     className="h-8 mr-3"
                   />
                   <div>
-                    <div className="font-medium">MercadoPago</div>
-                    <div className="text-sm text-gray-600">Tarjetas, efectivo y más</div>
+                    <div className="font-medium">Wompi</div>
+                    <div className="text-sm text-gray-600">Tarjetas y PSE</div>
                   </div>
                 </div>
               </label>

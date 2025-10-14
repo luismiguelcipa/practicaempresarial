@@ -30,37 +30,44 @@ const ProductCard = ({ product }) => {
 
 
   return (
-    <div className="bg-black p-6 rounded-xl shadow-lg">
-      <div className="bg-black rounded-xl shadow-lg overflow-hidden transition-transform transform hover:scale-105">
+    <div className="bg-black p-4 rounded-lg shadow-md">
+      <div className="bg-black rounded-lg shadow-md overflow-hidden transition-transform transform hover:scale-105">
         <Link to={`/product/${product.id || product._id}`} className="block">
           <div className="relative">
             <img
-              className="w-full h-56 object-cover"
+              className="w-full h-48 object-cover"
               src={displayImage || '/placeholder-product.png'}
               alt={product.name}
             />
           </div>
         </Link>
-        <div className="p-5">
-          <h3 className="text-lg font-semibold text-white truncate">{product.name}</h3>
-            <p className="text-sm text-gray-400 mt-1">{product.description || product.category}</p>
-          <div className="flex items-baseline my-3">
-            <span className="text-2xl font-bold text-white">${displayPrice}</span>
-            {product.originalPrice && (
-              <span className="text-sm text-gray-500 line-through ml-2">${product.originalPrice}</span>
+        <div className="p-4">
+          <h3 className="text-base font-semibold text-white truncate">{product.name}</h3>
+            <p className="text-xs text-gray-400 mt-1 line-clamp-1">{product.description || product.category}</p>
+          <div className="flex items-baseline my-2.5">
+            {product.originalPrice && product.originalPrice > displayPrice ? (
+              <>
+                <span className="text-xl font-bold text-red-500">${displayPrice}</span>
+                <span className="text-xs text-gray-500 line-through ml-2">${product.originalPrice}</span>
+                <span className="text-[11px] text-green-400 ml-2">
+                  -{Math.round(((product.originalPrice - displayPrice) / product.originalPrice) * 100)}%
+                </span>
+              </>
+            ) : (
+              <span className="text-xl font-bold text-white">${displayPrice}</span>
             )}
           </div>
 
-          <div className="h-10" />
+          <div className="h-3" />
 
           <button
             onClick={handleOpenQuickAdd}
             disabled={!product.inStock || (displayStock !== undefined && displayStock <= 0)}
-            className={`w-full text-white font-bold py-2 px-4 rounded-full transition ${product.inStock && (displayStock === undefined || displayStock > 0) ? 'bg-red-600 hover:bg-blue-700' : 'bg-gray-600 cursor-not-allowed opacity-60'}`}
+            className={`w-full text-white text-sm font-semibold py-2 px-4 rounded-full transition ${product.inStock && (displayStock === undefined || displayStock > 0) ? 'bg-red-600 hover:bg-blue-700' : 'bg-gray-600 cursor-not-allowed opacity-60'}`}
             aria-label="Elegir opciones y añadir"
           >
             <span className="inline-flex items-center gap-2 justify-center">
-              <ShoppingCart size={16} />
+              <ShoppingCart size={15} />
               {product.inStock && (displayStock === undefined || displayStock > 0) ? 'Agregar' : 'Agotado'}
             </span>
           </button>

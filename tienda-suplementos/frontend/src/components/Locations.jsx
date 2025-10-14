@@ -9,16 +9,11 @@ const Locations = () => {
     address: "Cra 10 #22-70-Local 101, Tunja, Boyacá",
     phone: "573006851794",
     whatsapp: "573006851794",
-    email: "info@intsuplementos.com",
+    email: "internationalnutritioncol@gmail.com",
     coordinates: { lat: 5.53565843789193, lng: -73.36111820444094 }, //,Actualiza con tu ubicación real
     hours: {
-      monday: "8:30 AM - 1:00 PM, 3:00 PM - 8:00 PM",
-      tuesday: "8:30 AM - 1:00 PM, 3:00 PM - 8:00 PM", 
-      wednesday: "8:30 AM - 1:00 PM, 3:00 PM - 8:00 PM",
-      thursday: "8:30 AM - 1:00 PM, 3:00 PM - 8:00 PM",
-      friday: "8:30 AM - 1:00 PM, 3:00 PM - 8:00 PM",
-      saturday: "8:30 AM - 1:00 PM, 3:00 PM - 8:00 PM",
-      sunday: "10:00 AM - 5:00 PM"
+      week: "8:30 AM - 1:00 PM, 3:00 PM - 8:00 PM",
+      weekend: "10:00 AM - 5:00 PM"
     },
     isOpen: true,
     rating: 4.9,
@@ -27,13 +22,8 @@ const Locations = () => {
 
   const getDayName = (dayKey) => {
     const days = {
-      monday: 'Lunes',
-      tuesday: 'Martes',
-      wednesday: 'Miércoles',
-      thursday: 'Jueves',
-      friday: 'Viernes',
-      saturday: 'Sábado',
-      sunday: 'Domingo'
+      week: 'Lunes-sábado',
+      weekend: 'Domingo'
     };
     return days[dayKey];
   };

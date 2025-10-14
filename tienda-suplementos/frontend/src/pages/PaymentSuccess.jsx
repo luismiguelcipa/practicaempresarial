@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { api } from '../services/api';
+import api from '../services/api';
 
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
@@ -141,6 +141,13 @@ const PaymentSuccess = () => {
           {/* Botones de acción */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
+              to="/orders"
+              className="bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-colors"
+            >
+              Ver Mis Pedidos
+            </Link>
+            
+            <Link
               to="/products"
               className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
             >
@@ -151,7 +158,7 @@ const PaymentSuccess = () => {
               to="/profile"
               className="bg-gray-200 text-gray-800 px-6 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors"
             >
-              Ver Mis Pedidos
+              Mi Perfil
             </Link>
           </div>
 

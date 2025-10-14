@@ -162,7 +162,17 @@ export default function ProductDetail() {
 						</div>
 
 						<div>
-							<div className="text-3xl font-bold text-gray-900 mb-1">${displayPrice}</div>
+							<div className="flex items-baseline gap-3 mb-1">
+								<span className="text-3xl font-bold text-gray-900">${displayPrice}</span>
+								{product?.originalPrice && product.originalPrice > displayPrice && (
+									<>
+										<span className="text-base text-gray-400 line-through">${product.originalPrice}</span>
+										<span className="text-sm font-semibold text-green-600">
+											-{Math.round(((product.originalPrice - displayPrice) / product.originalPrice) * 100)}%
+										</span>
+									</>
+								)}
+							</div>
 							{selectedSize && !selectedSize.__isBase && product.baseSize && (
 								<p className="text-xs text-gray-500">Precio para tamaño {selectedSize.size}</p>
 							)}

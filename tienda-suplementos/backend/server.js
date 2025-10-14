@@ -18,7 +18,7 @@ app.use(morgan('combined'));
 // Rate limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutos
-  max: 100, // máximo 100 requests por IP
+  max: 1000, // máximo 1000 requests por IP (aumentado para desarrollo)
   message: 'Demasiadas solicitudes desde esta IP, intenta de nuevo más tarde.'
 });
 app.use('/api/', limiter);
@@ -58,14 +58,18 @@ app.use('/uploads', express.static(path.join(__dirname, 'public/uploads')));
 const authRoutes = require('./routes/auth');
 const productsRoutes = require('./routes/products');
 const paymentsRoutes = require('./routes/payments');
+const wompiRoutes = require('./routes/wompi');
 const ordersRoutes = require('./routes/orders');
 const usersRoutes = require('./routes/users');
+const combosRoutes = require('./routes/combos');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/products', productsRoutes);
 app.use('/api/payments', paymentsRoutes);
+app.use('/api/wompi', wompiRoutes);
 app.use('/api/orders', ordersRoutes);
 app.use('/api/users', usersRoutes);
+app.use('/api/combos', combosRoutes);
 
 // Ruta de prueba
 app.get('/api/health', (req, res) => {

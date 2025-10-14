@@ -8,7 +8,7 @@ const createTransporter = () => {
   const provider = (process.env.EMAIL_PROVIDER || '').toLowerCase();
 
   if (provider === 'gmail') {
-    return nodemailer.createTransport({
+    return nodemailer.createTransporter({
       service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER, // tu correo @gmail.com
@@ -20,7 +20,7 @@ const createTransporter = () => {
   }
 
   if (provider === 'ethereal') {
-    return nodemailer.createTransport({
+    return nodemailer.createTransporter({
       host: 'smtp.ethereal.email',
       port: 587,
       secure: false,
@@ -34,7 +34,7 @@ const createTransporter = () => {
   }
 
   // Fallback a configuración custom
-  return nodemailer.createTransport({
+  return nodemailer.createTransporter({
     host: process.env.EMAIL_HOST,
     port: Number(process.env.EMAIL_PORT || 587),
     secure: String(process.env.EMAIL_SECURE || 'false') === 'true', // true si usas 465

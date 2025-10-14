@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { api } from '../services/api';
+import api from '../services/api';
 
 const PaymentFailure = () => {
   const [searchParams] = useSearchParams();
@@ -159,7 +159,7 @@ const PaymentFailure = () => {
   );
 };
 
-// Función para traducir mensajes de error de MercadoPago
+// Función para traducir mensajes de error de pagos
 const getErrorMessage = (statusDetail) => {
   const errorMessages = {
     'cc_rejected_insufficient_amount': 'Fondos insuficientes',

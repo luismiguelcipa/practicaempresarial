@@ -15,10 +15,15 @@ const productSchema = new mongoose.Schema({
     required: [true, 'El precio es requerido'],
     min: [0, 'El precio no puede ser negativo']
   },
+  originalPrice: {
+    type: Number,
+    min: [0, 'El precio original no puede ser negativo'],
+    default: null
+  },
   category: {
     type: String,
     required: [true, 'La categoría es requerida'],
-    enum: ['Proteínas', 'Creatina', 'Aminoácidos', 'Pre-Workout', 'Vitaminas', 'Otros']
+    enum: ['Proteínas', 'Creatina', 'Aminoácidos', 'Pre-Workout', 'Vitaminas', 'Para la salud', 'Complementos', 'Comida']
   },
   // Tipo/Subcategoría (solo para ciertas categorías)
   tipo: {

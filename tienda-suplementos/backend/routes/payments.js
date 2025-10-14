@@ -1,85 +1,61 @@
-const express = require('express');
+﻿const express = require('express');
 const { protect } = require('../middleware/auth');
-const { createPreference, createCardPayment, getPayment, verifyWebhook } = require('../utils/mercadoPago');
+const { 
+  createWompiTransaction, 
+  verifyWompiTransaction, 
+  processWompiWebhook,
+  getAvailablePaymentMethods 
+} = require('../utils/wompi');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 
 const router = express.Router();
 
-// Info de la cuenta de MP (solo desarrollo)
-if (process.env.NODE_ENV !== 'production') {
-  const https = require('https');
-  router.get('/mp-info', (req, res) => {
-    const token = process.env.MERCADOPAGO_ACCESS_TOKEN || (process.env.NODE_ENV === 'production' ? process.env.MERCADOPAGO_ACCESS_TOKEN_PROD : (process.env.MERCADOPAGO_ACCESS_TOKEN || process.env.MERCADOPAGO_ACCESS_TOKEN_PROD));
-    if (!token) return res.status(200).json({ ok: true, message: 'Sin token configurado' });
-
-    const options = {
-      method: 'GET',
-      headers: { Authorization: `Bearer ${token}` }
-    };
-
-    const reqHttps = https.request('https://api.mercadopago.com/users/me', options, (resp) => {
-      let body = '';
-      resp.on('data', (chunk) => (body += chunk));
-      resp.on('end', () => {
-        try {
-          const data = JSON.parse(body || '{}');
-          const label = token.startsWith('TEST-') ? 'TEST' : token.startsWith('APP_USR-') ? 'APP_USR' : 'CUSTOM';
-          return res.json({
-            ok: true,
-            tokenLabel: label,
-            site_id: data?.site_id,
-            default_currency_id: data?.default_currency_id,
-            user_id: data?.id,
-            email: data?.email
-          });
-        } catch (e) {
-          return res.status(500).json({ ok: false, error: e?.message || String(e), raw: body });
-        }
-      });
-    });
-
-    reqHttps.on('error', (err) => res.status(500).json({ ok: false, error: err?.message || String(err) }));
-    reqHttps.end();
-  });
-}
-
-// Crear preferencia de pago
-router.post('/create-preference', protect, async (req, res) => {
+// Crear transacción con Wompi Widget
+router.post('/create-wompi-transaction', protect, async (req, res) => {
   try {
-    const { items, shippingAddress } = req.body;
+    console.log('📥 Recibiendo datos para transacción Wompi:', req.body);
+    const { items, shippingAddress, customerData } = req.body;
     
-    // Validar que hay items
     if (!items || items.length === 0) {
+      console.log('❌ Error: No hay items en el carrito');
       return res.status(400).json({
         success: false,
         message: 'No hay productos en el carrito'
       });
     }
 
-    // Calcular total
+    console.log('✅ Items validados:', items.length, 'productos');
     let totalAmount = 0;
     const orderItems = [];
 
+    console.log('🔍 Procesando items...');
     for (const item of items) {
-      const product = await Product.findById(item.productId);
+      console.log('🔍 Procesando item:', item);
+      // Ser flexible con el ID del producto
+      const productId = item.productId || item.id || item._id;
+      console.log('🔍 ProductId extraído:', productId);
+      
+      const product = await Product.findById(productId);
+      console.log('🔍 Producto encontrado:', product ? `${product.name} - $${product.price}` : 'NO ENCONTRADO');
+      
       if (!product) {
+        console.log('❌ Error: Producto no encontrado -', productId);
         return res.status(400).json({
           success: false,
-          message: `Producto ${item.productId} no encontrado`
+          message: `Producto ${productId} no encontrado`
         });
       }
 
       if (product.stock < item.quantity) {
+        console.log('❌ Error: Stock insuficiente -', product.name, 'Stock:', product.stock, 'Solicitado:', item.quantity);
         return res.status(400).json({
           success: false,
           message: `Stock insuficiente para ${product.name}`
         });
       }
 
-      const itemTotal = product.price * item.quantity;
-      totalAmount += itemTotal;
-
+      totalAmount += product.price * item.quantity;
       orderItems.push({
         product: product._id,
         quantity: item.quantity,
@@ -87,196 +63,137 @@ router.post('/create-preference', protect, async (req, res) => {
       });
     }
 
-    // Crear pedido
-    const order = await Order.create({
-      user: req.user.id,
-      items: orderItems,
-      totalAmount,
-      shippingAddress,
-      paymentMethod: 'mercadopago'
-    });
+    console.log('✅ Total calculado:', totalAmount);
+    console.log('✅ Items procesados:', orderItems);
 
-    // Crear preferencia de Mercado Pago
-    const itemsWithProducts = await Promise.all(
-      orderItems.map(async item => ({
-        product: await Product.findById(item.product),
-        quantity: item.quantity,
-        price: item.price
-      }))
-    );
-
-    const preferenceData = {
-      orderId: order._id.toString(),
-      user: req.user,
-      items: itemsWithProducts
+    // Mapear shippingAddress para que coincida con el modelo Order
+    const mappedShippingAddress = {
+      street: shippingAddress.addressLine1 || '',
+      city: shippingAddress.city || '',
+      state: shippingAddress.region || shippingAddress.state || '',
+      zipCode: shippingAddress.postalCode || shippingAddress.zipCode || '',
+      country: shippingAddress.country || 'Colombia'
     };
 
-    const preference = await createPreference(preferenceData);
-
-    // Si hubo error creando la preferencia, no redirigir, reportar al frontend
-    if (!preference || preference.error || (!preference.init_point && !preference.sandbox_init_point)) {
-      const devExtraErr = {};
-      if (process.env.NODE_ENV !== 'production') {
-        devExtraErr.currency = process.env.MP_CURRENCY_ID || 'COP';
-        const token = process.env.MERCADOPAGO_ACCESS_TOKEN || process.env.MERCADOPAGO_ACCESS_TOKEN_PROD;
-        devExtraErr.tokenLabel = token?.startsWith('TEST-') ? 'TEST' : token?.startsWith('APP_USR-') ? 'APP_USR' : 'CUSTOM';
-      }
-      return res.status(500).json({
-        success: false,
-        message: preference?.error || 'No se pudo crear la preferencia de pago',
-        details: devExtraErr
-      });
-    }
-
-    // Guardar ID de preferencia
-    order.mercadoPagoPreferenceId = preference.id;
-    await order.save();
-
-    const devExtra = {};
-    if (process.env.NODE_ENV !== 'production') {
-      try {
-        const ip = preference?.init_point || preference?.sandbox_init_point;
-        if (ip) {
-          const u = new URL(ip);
-          devExtra.init_point_host = u.host;
-          devExtra.init_point_path = u.pathname;
-        }
-      } catch {}
-      devExtra.currency = process.env.MP_CURRENCY_ID || 'COP';
-      const token = process.env.MERCADOPAGO_ACCESS_TOKEN || process.env.MERCADOPAGO_ACCESS_TOKEN_PROD;
-      devExtra.tokenLabel = token?.startsWith('TEST-') ? 'TEST' : token?.startsWith('APP_USR-') ? 'APP_USR' : 'CUSTOM';
-      devExtra.sandbox_init_point = preference.sandbox_init_point;
-    }
-
-    res.json({
-      success: true,
-      preferenceId: preference.id,
-      init_point: preference.init_point,
-      orderId: order._id,
-      ...devExtra
-    });
-  } catch (error) {
-    console.error('Error creando preferencia:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error procesando pago'
-    });
-  }
-});
-
-// Pago con tarjeta (Checkout API / Bricks)
-router.post('/card', protect, async (req, res) => {
-  try {
-    const { items, payer, card } = req.body;
-
-    if (!items || items.length === 0) {
-      return res.status(400).json({ success: false, message: 'No hay productos en el carrito' });
-    }
-    if (!card?.token) {
-      return res.status(400).json({ success: false, message: 'Falta token de tarjeta' });
-    }
-
-    // Calcular total y reservar pedido
-    let totalAmount = 0;
-    const orderItems = [];
-    for (const it of items) {
-      const product = await Product.findById(it.productId);
-      if (!product) return res.status(400).json({ success: false, message: `Producto ${it.productId} no encontrado` });
-      if (product.stock < it.quantity) return res.status(400).json({ success: false, message: `Stock insuficiente para ${product.name}` });
-      totalAmount += product.price * it.quantity;
-      orderItems.push({ product: product._id, quantity: it.quantity, price: product.price });
-    }
+    console.log('🗺️ Dirección mapeada:', mappedShippingAddress);
 
     const order = await Order.create({
       user: req.user.id,
       items: orderItems,
       totalAmount,
-      shippingAddress: req.body.shippingAddress || {},
-      paymentMethod: 'mercadopago_card',
+      shippingAddress: mappedShippingAddress,
+      paymentMethod: 'wompi',
       paymentStatus: 'pending'
     });
 
-    const payResp = await createCardPayment({
-      token: card.token,
-      installments: card.installments,
-      payment_method_id: card.payment_method_id,
-      issuer_id: card.issuer_id,
-      payer: payer || { email: req.user.email },
-      amount: totalAmount,
-      description: 'Compra en tienda',
-      orderId: order._id.toString()
+    console.log('✅ Orden creada:', order._id);
+
+    console.log('✅ Orden creada:', order._id);
+
+    const reference = `ORDER_${order._id}`;
+    console.log('🔗 Referencia generada:', reference);
+    
+    console.log('🚀 Creando transacción Wompi...');
+    const wompiResponse = await createWompiTransaction({
+      items: orderItems,
+      customerData: customerData || {
+        email: req.user.email,
+        fullName: `${req.user.firstName} ${req.user.lastName}`,
+        phoneNumber: req.user.phoneNumber || '',
+        legalId: req.user.legalId || '',
+        legalIdType: req.user.legalIdType || 'CC'
+      },
+      shippingAddress,
+      total: totalAmount,
+      reference
     });
 
-    if (!payResp || payResp.error) {
-      return res.status(500).json({ success: false, message: payResp?.error || 'Error procesando pago', detail: payResp?.detail });
+    console.log('📊 Respuesta de Wompi:', wompiResponse);
+
+    if (!wompiResponse.success) {
+      return res.status(500).json({
+        success: false,
+        message: wompiResponse.error || 'Error creando transacción con Wompi'
+      });
     }
 
-    // Actualizar estado de la orden según respuesta
-    order.mercadoPagoPaymentId = payResp.id;
-    order.paymentStatus = payResp.status;
-    if (payResp.status === 'approved') {
-      order.status = 'processing';
-      for (const it of order.items) {
-        await Product.findByIdAndUpdate(it.product, { $inc: { stock: -it.quantity } });
-      }
-    }
+    order.wompiReference = reference;
     await order.save();
 
-    res.json({ success: true, payment: { id: payResp.id, status: payResp.status, status_detail: payResp.status_detail }, orderId: order._id });
-  } catch (err) {
-    console.error('Error en pago con tarjeta:', err);
-    res.status(500).json({ success: false, message: 'Error interno procesando pago' });
+    res.json({
+      success: true,
+      orderId: order._id,
+      wompiData: wompiResponse.transactionData
+    });
+
+  } catch (error) {
+    console.error('❌ Error creando transacción Wompi:', error);
+    console.error('Stack trace:', error.stack);
+    res.status(500).json({
+      success: false,
+      message: 'Error procesando pago',
+      error: process.env.NODE_ENV !== 'production' ? error.message : 'Error interno del servidor',
+      stack: process.env.NODE_ENV !== 'production' ? error.stack : undefined
+    });
   }
 });
 
-// Webhook de Mercado Pago
-router.post('/webhook', async (req, res) => {
+// Webhook de Wompi
+router.post('/wompi-webhook', async (req, res) => {
   try {
-    const { type, data } = req.body;
+    const webhookResult = processWompiWebhook(req);
+    
+    if (!webhookResult.success) {
+      return res.status(400).json({
+        success: false,
+        message: webhookResult.error
+      });
+    }
 
-    if (type === 'payment') {
-      const paymentId = data.id;
+    const { event } = webhookResult;
+    
+    if (event.event === 'transaction.updated') {
+      const transaction = event.data.transaction;
+      const reference = transaction.reference;
       
-      // Obtener información del pago
-      const payment = await getPayment(paymentId);
-      
-      // Buscar pedido por external_reference
       const order = await Order.findOne({
-        _id: payment.external_reference
+        wompiReference: reference
       });
 
       if (!order) {
+        console.warn(`Orden no encontrada para referencia: ${reference}`);
         return res.status(404).json({
           success: false,
-          message: 'Pedido no encontrado'
+          message: 'Orden no encontrada'
         });
       }
 
-      // Actualizar estado del pedido
-      order.mercadoPagoPaymentId = paymentId;
+      order.wompiTransactionId = transaction.id;
+      order.paymentStatus = transaction.status;
       
-      if (payment.status === 'approved') {
-        order.paymentStatus = 'approved';
+      if (transaction.status === 'APPROVED') {
         order.status = 'processing';
         
-        // Reducir stock de productos
-        for (const item of order.items) {
-          await Product.findByIdAndUpdate(
-            item.product,
-            { $inc: { stock: -item.quantity } }
-          );
+        if (order.paymentStatus !== 'APPROVED') {
+          for (const item of order.items) {
+            await Product.findByIdAndUpdate(
+              item.product,
+              { $inc: { stock: -item.quantity } }
+            );
+          }
         }
-      } else if (payment.status === 'rejected') {
-        order.paymentStatus = 'rejected';
+      } else if (transaction.status === 'DECLINED') {
         order.status = 'cancelled';
       }
 
       await order.save();
-
-      res.json({ success: true });
+      console.log(`Orden ${order._id} actualizada: ${transaction.status}`);
     }
+
+    res.json({ success: true });
+
   } catch (error) {
-    console.error('Error procesando webhook:', error);
+    console.error('Error procesando webhook Wompi:', error);
     res.status(500).json({
       success: false,
       message: 'Error procesando webhook'
@@ -284,7 +201,7 @@ router.post('/webhook', async (req, res) => {
   }
 });
 
-// Obtener estado de pago
+// Obtener estado de pago por orden
 router.get('/payment-status/:orderId', protect, async (req, res) => {
   try {
     const order = await Order.findOne({
@@ -304,9 +221,12 @@ router.get('/payment-status/:orderId', protect, async (req, res) => {
       data: {
         paymentStatus: order.paymentStatus,
         orderStatus: order.status,
-        totalAmount: order.totalAmount
+        totalAmount: order.totalAmount,
+        wompiTransactionId: order.wompiTransactionId,
+        wompiReference: order.wompiReference
       }
     });
+
   } catch (error) {
     console.error('Error obteniendo estado:', error);
     res.status(500).json({
@@ -316,56 +236,102 @@ router.get('/payment-status/:orderId', protect, async (req, res) => {
   }
 });
 
-// Verificar pago por ID
-router.get('/verify/:paymentId', protect, async (req, res) => {
+// Verificar transacción
+router.get('/verify-transaction/:transactionId', protect, async (req, res) => {
   try {
-    const payment = await getPayment(req.params.paymentId);
+    const { transactionId } = req.params;
     
+    const verificationResult = await verifyWompiTransaction(transactionId);
+    
+    if (!verificationResult.success) {
+      return res.status(500).json({
+        success: false,
+        message: verificationResult.error
+      });
+    }
+
     const order = await Order.findOne({
-      _id: payment.external_reference
+      wompiTransactionId: transactionId
     }).populate('items.product');
 
-    if (!order) {
-      return res.status(404).json({
+    res.json({
+      success: true,
+      transaction: verificationResult.transaction,
+      order: order
+    });
+
+  } catch (error) {
+    console.error('Error verificando transacción:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error verificando transacción'
+    });
+  }
+});
+
+// Métodos de pago disponibles
+router.get('/payment-methods', async (req, res) => {
+  try {
+    const methodsResult = await getAvailablePaymentMethods();
+    
+    if (!methodsResult.success) {
+      return res.status(500).json({
         success: false,
-        message: 'Orden no encontrada'
+        message: methodsResult.error
       });
     }
 
     res.json({
       success: true,
-      order: order,
-      payment: payment
+      methods: methodsResult.methods
     });
+
   } catch (error) {
-    console.error('Error verificando pago:', error);
+    console.error('Error obteniendo métodos de pago:', error);
     res.status(500).json({
       success: false,
-      message: 'Error verificando pago'
+      message: 'Error obteniendo métodos de pago'
     });
   }
 });
 
-// Obtener estado de pago por payment ID
-router.get('/status/:paymentId', protect, async (req, res) => {
-  try {
-    const payment = await getPayment(req.params.paymentId);
-    
+// Información de configuración (solo desarrollo)
+if (process.env.NODE_ENV !== 'production') {
+  router.get('/wompi-info', (req, res) => {
     res.json({
       success: true,
-      id: payment.id,
-      status: payment.status,
-      status_detail: payment.status_detail,
-      payment_method_id: payment.payment_method_id,
-      transaction_amount: payment.transaction_amount
+      config: {
+        publicKey: process.env.WOMPI_PUBLIC_KEY ? 'Configurada' : 'No configurada',
+        privateKey: process.env.WOMPI_PRIVATE_KEY ? 'Configurada' : 'No configurada',
+        integritySecret: process.env.WOMPI_INTEGRITY_SECRET ? 'Configurada' : 'No configurada',
+        baseUrl: process.env.WOMPI_BASE_URL,
+        environment: process.env.WOMPI_BASE_URL?.includes('sandbox') ? 'Sandbox' : 'Producción'
+      }
     });
-  } catch (error) {
-    console.error('Error obteniendo estado del pago:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error obteniendo información del pago'
-    });
-  }
-});
+  });
+
+  // Endpoint de prueba para debuggear
+  router.post('/test-wompi-data', protect, async (req, res) => {
+    try {
+      console.log('📥 Test endpoint - datos recibidos:', req.body);
+      res.json({
+        success: true,
+        message: 'Datos recibidos correctamente',
+        receivedData: req.body,
+        user: {
+          id: req.user.id,
+          email: req.user.email
+        }
+      });
+    } catch (error) {
+      console.error('❌ Error en test endpoint:', error);
+      res.status(500).json({
+        success: false,
+        message: error.message,
+        stack: error.stack
+      });
+    }
+  });
+}
 
 module.exports = router;

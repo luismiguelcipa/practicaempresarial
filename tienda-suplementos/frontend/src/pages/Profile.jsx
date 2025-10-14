@@ -1,294 +1,573 @@
 import { useAuth } from '../context/AuthContext';
 import { useEffect, useState } from 'react';
-import axios from '../utils/axios';
-
-// TODO: separar en subcomponentes si crece más
+import { useNavigate } from 'react-router-dom';
+import api from '../services/api';
+import Alert from '../components/Alert';
 
 export default function Profile() {
-  const { isAuthenticated, logout } = useAuth();
+  const { isAuthenticated, user, logout } = useAuth();
+  const navigate = useNavigate();
+  
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [alert, setAlert] = useState({ show: false, message: '', type: 'info' });
+  
+  // Datos del perfil
   const [profile, setProfile] = useState(null);
   const [editing, setEditing] = useState(false);
-  const [message, setMessage] = useState(null);
-  const [form, setForm] = useState({ firstName: '', lastName: '', phone: '' });
-  const [addresses, setAddresses] = useState([]);
-  const [addrDraft, setAddrDraft] = useState({ street: '', city: '', state: '', zipCode: '', country: '' });
-  const [showCompleteHint, setShowCompleteHint] = useState(false);
+  const [editingShipping, setEditingShipping] = useState(false);
+  
+  // Formulario de perfil básico
+  const [profileForm, setProfileForm] = useState({
+    firstName: '',
+    lastName: '',
+    phone: ''
+  });
+  
+  // Formulario de información de envío
+  const [shippingForm, setShippingForm] = useState({
+    fullName: '',
+    phoneNumber: '',
+    street: '',
+    addressLine2: '',
+    city: '',
+    region: '',
+    zipCode: '',
+    country: 'Colombia'
+  });
 
-  // PIN admin management states
-  const [pinSectionOpen, setPinSectionOpen] = useState(false);
-  const [pinLoading, setPinLoading] = useState(false);
-  const [pinMessage, setPinMessage] = useState(null);
-  const [pinError, setPinError] = useState(null);
-  const [pinForm, setPinForm] = useState({ pin: '', oldPin: '', newPin: '', confirmPin: '' });
-  const [pinStatus, setPinStatus] = useState({ enabled: false, attempts: 0, lockedUntil: null });
+  const regions = [
+    'Amazonas', 'Antioquia', 'Arauca', 'Atlántico', 'Bolívar', 'Boyacá', 'Caldas', 'Caquetá', 
+    'Casanare', 'Cauca', 'Cesar', 'Chocó', 'Córdoba', 'Cundinamarca', 'Guainía', 'Guaviare', 
+    'Huila', 'La Guajira', 'Magdalena', 'Meta', 'Nariño', 'Norte de Santander', 'Putumayo', 
+    'Quindío', 'Risaralda', 'San Andrés y Providencia', 'Santander', 'Sucre', 'Tolima', 
+    'Valle del Cauca', 'Vaupés', 'Vichada'
+  ];
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login');
+      return;
+    }
+    
+    fetchProfile();
+  }, [isAuthenticated]);
 
   const fetchProfile = async () => {
     try {
       setLoading(true);
-      const { data } = await axios.get('/api/auth/profile');
-      setProfile(data.data);
-      setForm({
-        firstName: data.data.firstName || '',
-        lastName: data.data.lastName || '',
-        phone: data.data.phone || ''
-      });
-      setAddresses(data.data.addresses || []);
-      setPinStatus({
-        enabled: !!data.data.adminPinEnabled,
-        attempts: data.data.adminPinAttempts || 0,
-        lockedUntil: data.data.adminPinLockedUntil || null
-      });
-      const incomplete = !data.data.firstName || !data.data.lastName || !data.data.phone;
-      if (incomplete) {
-        setShowCompleteHint(true);
-        setEditing(true);
+      const response = await api.get('/users/profile');
+      
+      if (response.data.success) {
+        const userData = response.data.user;
+        setProfile(userData);
+        
+        // Llenar formulario de perfil básico
+        setProfileForm({
+          firstName: userData.firstName || '',
+          lastName: userData.lastName || '',
+          phone: userData.phone || ''
+        });
+        
+        // Llenar formulario de información de envío
+        const shipping = userData.shippingInfo || {};
+        setShippingForm({
+          fullName: shipping.fullName || '',
+          phoneNumber: shipping.phoneNumber || '',
+          street: shipping.street || '',
+          addressLine2: shipping.addressLine2 || '',
+          city: shipping.city || '',
+          region: shipping.region || '',
+          zipCode: shipping.zipCode || '',
+          country: shipping.country || 'Colombia'
+        });
       }
-    } catch (e) {
-      setError(e.response?.data?.message || 'Error cargando perfil');
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      setAlert({
+        show: true,
+        message: 'Error cargando el perfil',
+        type: 'error'
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    fetchProfile();
-  }, [isAuthenticated]);
-
-  const onChange = (e) => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
-
-  const addAddress = () => {
-    if (!addrDraft.street || !addrDraft.city) return;
-    setAddresses(prev => [...prev, { ...addrDraft, isDefault: prev.length === 0 }]);
-    setAddrDraft({ street: '', city: '', state: '', zipCode: '', country: '' });
-  };
-
-  const removeAddress = (idx) => {
-    setAddresses(prev => prev.filter((_, i) => i !== idx));
-  };
-
-  const setDefaultAddress = (idx) => {
-    setAddresses(prev => prev.map((a, i) => ({ ...a, isDefault: i === idx })));
-  };
-
-  const saveProfile = async () => {
-    setSaving(true); setError(null); setMessage(null);
+  const handleProfileSubmit = async (e) => {
+    e.preventDefault();
     try {
-      await axios.put('/api/auth/profile', { ...form, addresses });
-      setMessage('Perfil actualizado');
-      setEditing(false);
-      if (form.firstName && form.lastName && form.phone) {
-        setShowCompleteHint(false);
+      setSaving(true);
+      const response = await api.put('/users/profile', profileForm);
+      
+      if (response.data.success) {
+        setProfile(response.data.user);
+        setEditing(false);
+        setAlert({
+          show: true,
+          message: 'Perfil actualizado exitosamente',
+          type: 'success'
+        });
       }
-      fetchProfile();
-    } catch (e) {
-      setError(e.response?.data?.message || 'Error guardando');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      setAlert({
+        show: true,
+        message: error.response?.data?.message || 'Error actualizando el perfil',
+        type: 'error'
+      });
     } finally {
       setSaving(false);
     }
   };
 
-  // Helpers PIN
-  const remainingLockMs = pinStatus.lockedUntil ? (new Date(pinStatus.lockedUntil).getTime() - Date.now()) : 0;
-  const remainingLockMin = remainingLockMs > 0 ? Math.ceil(remainingLockMs / 60000) : 0;
-
-  const handleSetPin = async () => {
-    setPinError(null); setPinMessage(null); setPinLoading(true);
-    if (!/^\d{4,10}$/.test(pinForm.pin)) { setPinError('PIN debe tener 4-10 dígitos'); setPinLoading(false); return; }
+  const handleShippingSubmit = async (e) => {
+    e.preventDefault();
     try {
-      await axios.post('/api/auth/admin/set-pin', { pin: pinForm.pin });
-      setPinMessage('PIN configurado');
-      setPinForm({ pin: '', oldPin: '', newPin: '', confirmPin: '' });
-      fetchProfile();
-    } catch (e) {
-      setPinError(e.response?.data?.message || 'Error configurando PIN');
-    } finally { setPinLoading(false); }
+      setSaving(true);
+      const response = await api.put('/users/shipping-info', shippingForm);
+      
+      if (response.data.success) {
+        setProfile(prev => ({
+          ...prev,
+          shippingInfo: response.data.shippingInfo
+        }));
+        setEditingShipping(false);
+        setAlert({
+          show: true,
+          message: 'Información de envío actualizada exitosamente',
+          type: 'success'
+        });
+      }
+    } catch (error) {
+      console.error('Error updating shipping info:', error);
+      setAlert({
+        show: true,
+        message: error.response?.data?.message || 'Error actualizando la información de envío',
+        type: 'error'
+      });
+    } finally {
+      setSaving(false);
+    }
   };
 
-  const handleChangePin = async () => {
-    setPinError(null); setPinMessage(null); setPinLoading(true);
-    if (!pinForm.oldPin || !pinForm.newPin || !pinForm.confirmPin) { setPinError('Completa todos los campos'); setPinLoading(false); return; }
-    if (pinForm.newPin !== pinForm.confirmPin) { setPinError('La confirmación no coincide'); setPinLoading(false); return; }
-    if (!/^\d{4,10}$/.test(pinForm.newPin)) { setPinError('Nuevo PIN inválido'); setPinLoading(false); return; }
-    try {
-      await axios.post('/api/auth/admin/change-pin', { oldPin: pinForm.oldPin, newPin: pinForm.newPin });
-      setPinMessage('PIN actualizado');
-      setPinForm({ pin: '', oldPin: '', newPin: '', confirmPin: '' });
-      fetchProfile();
-    } catch (e) {
-      setPinError(e.response?.data?.message || 'Error cambiando PIN');
-    } finally { setPinLoading(false); }
+  const handleLogout = () => {
+    logout();
+    navigate('/');
   };
 
-  const handleDisablePin = async () => {
-    if (!pinForm.pin) { setPinError('Ingresa tu PIN actual para deshabilitar'); return; }
-    setPinLoading(true); setPinError(null); setPinMessage(null);
-    try {
-      await axios.post('/api/auth/admin/disable-pin', { pin: pinForm.pin });
-      setPinMessage('PIN deshabilitado');
-      setPinForm({ pin: '', oldPin: '', newPin: '', confirmPin: '' });
-      fetchProfile();
-    } catch (e) {
-      setPinError(e.response?.data?.message || 'Error deshabilitando PIN');
-    } finally { setPinLoading(false); }
-  };
-
-  if (!isAuthenticated) {
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-6">
-        <p className="text-sm text-gray-600 bg-white/60 px-4 py-2 rounded">Debes iniciar sesión para ver tu perfil.</p>
+      <div className="min-h-screen bg-gray-50 py-8">
+        <div className="max-w-4xl mx-auto px-4">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Cargando perfil...</p>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-5xl mx-auto p-6 space-y-6">
-      <header className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-800">Mi Perfil</h1>
-        <button onClick={logout} className="text-sm text-red-600 hover:underline">Cerrar sesión</button>
-      </header>
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-4xl mx-auto px-4">
+        <Alert 
+          show={alert.show} 
+          message={alert.message} 
+          type={alert.type}
+          onClose={() => setAlert({ show: false, message: '', type: 'info' })}
+        />
 
-      {loading && <p className="text-sm text-gray-500">Cargando...</p>}
-      {error && <div className="text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded">{error}</div>}
-      {message && <div className="text-sm text-primary-600 bg-primary-50 border border-primary-200 px-3 py-2 rounded">{message}</div>}
-      {!loading && showCompleteHint && (
-        <div className="flex items-center gap-3 text-xs bg-amber-50 border border-amber-200 text-amber-700 px-4 py-2 rounded shadow-sm">
-          <span className="inline-block w-2 h-2 bg-amber-400 rounded-full animate-pulse" aria-hidden="true" />
-          <p className="m-0">Completa tus datos personales</p>
-          <button onClick={() => setEditing(true)} className="ml-auto text-[11px] font-medium text-amber-700 underline hover:no-underline">Editar ahora</button>
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">Mi Perfil</h1>
+          <p className="text-gray-600">Gestiona tu información personal y de envío</p>
         </div>
-      )}
 
-      {!loading && profile && (
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* Datos Básicos */}
-          <section className="lg:col-span-2 bg-white rounded-lg shadow p-5 space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="font-semibold text-lg">Datos personales</h2>
-              <button onClick={() => setEditing(e => !e)} className="text-xs text-indigo-600 hover:underline">
-                {editing ? 'Cancelar' : 'Editar'}
+          {/* Información básica */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Perfil básico */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold">Información Personal</h2>
+                <button
+                  onClick={() => setEditing(!editing)}
+                  className="text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  {editing ? 'Cancelar' : 'Editar'}
+                </button>
+              </div>
+
+              {editing ? (
+                <form onSubmit={handleProfileSubmit} className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Nombre
+                      </label>
+                      <input
+                        type="text"
+                        value={profileForm.firstName}
+                        onChange={(e) => setProfileForm(prev => ({
+                          ...prev,
+                          firstName: e.target.value
+                        }))}
+                        className="w-full p-3 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Apellido
+                      </label>
+                      <input
+                        type="text"
+                        value={profileForm.lastName}
+                        onChange={(e) => setProfileForm(prev => ({
+                          ...prev,
+                          lastName: e.target.value
+                        }))}
+                        className="w-full p-3 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        required
+                      />
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Teléfono
+                    </label>
+                    <input
+                      type="tel"
+                      value={profileForm.phone}
+                      onChange={(e) => setProfileForm(prev => ({
+                        ...prev,
+                        phone: e.target.value
+                      }))}
+                      className="w-full p-3 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                      required
+                    />
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="submit"
+                      disabled={saving}
+                      className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50"
+                    >
+                      {saving ? 'Guardando...' : 'Guardar Cambios'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditing(false)}
+                      className="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors font-medium"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="space-y-4">
+                  <div>
+                    <span className="text-sm text-gray-600">Email:</span>
+                    <p className="font-medium">{profile?.email}</p>
+                  </div>
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <span className="text-sm text-gray-600">Nombre:</span>
+                      <p className="font-medium">{profile?.firstName || 'No especificado'}</p>
+                    </div>
+                    <div>
+                      <span className="text-sm text-gray-600">Apellido:</span>
+                      <p className="font-medium">{profile?.lastName || 'No especificado'}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-600">Teléfono:</span>
+                    <p className="font-medium">{profile?.phone || 'No especificado'}</p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Información de envío */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold">Información de Envío</h2>
+                <button
+                  onClick={() => setEditingShipping(!editingShipping)}
+                  className="text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  {editingShipping ? 'Cancelar' : 'Editar'}
+                </button>
+              </div>
+
+              {editingShipping ? (
+                <form onSubmit={handleShippingSubmit} className="space-y-4">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Nombre completo *
+                      </label>
+                      <input
+                        type="text"
+                        value={shippingForm.fullName}
+                        onChange={(e) => setShippingForm(prev => ({
+                          ...prev,
+                          fullName: e.target.value
+                        }))}
+                        className="w-full p-3 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Teléfono *
+                      </label>
+                      <input
+                        type="tel"
+                        value={shippingForm.phoneNumber}
+                        onChange={(e) => setShippingForm(prev => ({
+                          ...prev,
+                          phoneNumber: e.target.value
+                        }))}
+                        className="w-full p-3 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Dirección *
+                    </label>
+                    <input
+                      type="text"
+                      value={shippingForm.street}
+                      onChange={(e) => setShippingForm(prev => ({
+                        ...prev,
+                        street: e.target.value
+                      }))}
+                      className="w-full p-3 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Calle, número, barrio"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Complemento de dirección
+                    </label>
+                    <input
+                      type="text"
+                      value={shippingForm.addressLine2}
+                      onChange={(e) => setShippingForm(prev => ({
+                        ...prev,
+                        addressLine2: e.target.value
+                      }))}
+                      className="w-full p-3 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Apartamento, piso, etc. (opcional)"
+                    />
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Ciudad *
+                      </label>
+                      <input
+                        type="text"
+                        value={shippingForm.city}
+                        onChange={(e) => setShippingForm(prev => ({
+                          ...prev,
+                          city: e.target.value
+                        }))}
+                        className="w-full p-3 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Departamento *
+                      </label>
+                      <select
+                        value={shippingForm.region}
+                        onChange={(e) => setShippingForm(prev => ({
+                          ...prev,
+                          region: e.target.value
+                        }))}
+                        className="w-full p-3 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        required
+                      >
+                        <option value="">Seleccionar departamento</option>
+                        {regions.map(region => (
+                          <option key={region} value={region}>{region}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Código postal
+                      </label>
+                      <input
+                        type="text"
+                        value={shippingForm.zipCode}
+                        onChange={(e) => setShippingForm(prev => ({
+                          ...prev,
+                          zipCode: e.target.value
+                        }))}
+                        className="w-full p-3 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        País
+                      </label>
+                      <input
+                        type="text"
+                        value={shippingForm.country}
+                        onChange={(e) => setShippingForm(prev => ({
+                          ...prev,
+                          country: e.target.value
+                        }))}
+                        className="w-full p-3 border rounded-lg focus:ring-blue-500 focus:border-blue-500"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="submit"
+                      disabled={saving}
+                      className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium disabled:opacity-50"
+                    >
+                      {saving ? 'Guardando...' : 'Guardar Información de Envío'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditingShipping(false)}
+                      className="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors font-medium"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <div className="space-y-4">
+                  {profile?.shippingInfo?.fullName ? (
+                    <>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <span className="text-sm text-gray-600">Nombre completo:</span>
+                          <p className="font-medium">{profile.shippingInfo.fullName}</p>
+                        </div>
+                        <div>
+                          <span className="text-sm text-gray-600">Teléfono:</span>
+                          <p className="font-medium">{profile.shippingInfo.phoneNumber}</p>
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-sm text-gray-600">Dirección:</span>
+                        <p className="font-medium">{profile.shippingInfo.street}</p>
+                        {profile.shippingInfo.addressLine2 && (
+                          <p className="text-gray-600">{profile.shippingInfo.addressLine2}</p>
+                        )}
+                      </div>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <span className="text-sm text-gray-600">Ciudad:</span>
+                          <p className="font-medium">{profile.shippingInfo.city}</p>
+                        </div>
+                        <div>
+                          <span className="text-sm text-gray-600">Departamento:</span>
+                          <p className="font-medium">{profile.shippingInfo.region}</p>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-8">
+                      <div className="text-gray-400 text-4xl mb-4">📍</div>
+                      <p className="text-gray-600 mb-4">No has configurado tu información de envío</p>
+                      <button
+                        onClick={() => setEditingShipping(true)}
+                        className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                      >
+                        Agregar Información de Envío
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Panel lateral */}
+          <div className="space-y-6">
+            {/* Accesos rápidos */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h3 className="text-lg font-semibold mb-4">Accesos Rápidos</h3>
+              <div className="space-y-3">
+                <button
+                  onClick={() => navigate('/orders')}
+                  className="w-full text-left p-3 hover:bg-gray-50 rounded-lg transition-colors flex items-center"
+                >
+                  <span className="text-blue-600 mr-3">📦</span>
+                  <span>Mis Pedidos</span>
+                </button>
+                <button
+                  onClick={() => navigate('/products')}
+                  className="w-full text-left p-3 hover:bg-gray-50 rounded-lg transition-colors flex items-center"
+                >
+                  <span className="text-green-600 mr-3">🛍️</span>
+                  <span>Ver Productos</span>
+                </button>
+                <button
+                  onClick={() => navigate('/cart')}
+                  className="w-full text-left p-3 hover:bg-gray-50 rounded-lg transition-colors flex items-center"
+                >
+                  <span className="text-purple-600 mr-3">🛒</span>
+                  <span>Mi Carrito</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Información de cuenta */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h3 className="text-lg font-semibold mb-4">Información de Cuenta</h3>
+              <div className="space-y-3 text-sm">
+                <div>
+                  <span className="text-gray-600">Email verificado:</span>
+                  <p className={`font-medium ${profile?.isEmailVerified ? 'text-green-600' : 'text-yellow-600'}`}>
+                    {profile?.isEmailVerified ? 'Sí' : 'Pendiente'}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-gray-600">Miembro desde:</span>
+                  <p className="font-medium">
+                    {profile?.createdAt ? new Date(profile.createdAt).toLocaleDateString('es-CO') : 'N/A'}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Cerrar sesión */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <button
+                onClick={handleLogout}
+                className="w-full bg-red-600 text-white px-4 py-3 rounded-lg hover:bg-red-700 transition-colors font-medium"
+              >
+                Cerrar Sesión
               </button>
             </div>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-xs font-medium text-gray-500">Email</label>
-                <p className="text-sm font-mono break-all">{profile.email}</p>
-                {profile.isEmailVerified ? (
-                  <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded bg-primary-100 text-primary-700">Verificado</span>
-                ) : (
-                  <span className="inline-block mt-1 text-[10px] px-2 py-0.5 rounded bg-gray-100 text-gray-700">No verificado</span>
-                )}
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Nombres</label>
-                  <input disabled={!editing} name="firstName" value={form.firstName} onChange={onChange} className="w-full border rounded px-2 py-1 text-sm disabled:bg-gray-100"/>
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Apellidos</label>
-                  <input disabled={!editing} name="lastName" value={form.lastName} onChange={onChange} className="w-full border rounded px-2 py-1 text-sm disabled:bg-gray-100"/>
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Teléfono</label>
-                <input disabled={!editing} name="phone" value={form.phone} onChange={onChange} className="w-full border rounded px-2 py-1 text-sm disabled:bg-gray-100"/>
-              </div>
-            </div>
-            {editing && (
-              <div className="flex justify-end gap-2 pt-2">
-                <button disabled={saving} onClick={() => { setEditing(false); setForm({ firstName: profile.firstName||'', lastName: profile.lastName||'', phone: profile.phone||'' }); }} className="text-xs px-3 py-1 rounded border">Reset</button>
-                <button disabled={saving} onClick={saveProfile} className="text-xs px-4 py-1 rounded bg-indigo-600 text-white disabled:opacity-50">{saving? 'Guardando...' : 'Guardar'}</button>
-              </div>
-            )}
-          </section>
-
-          {/* Direcciones */}
-          <section className="bg-white rounded-lg shadow p-5 space-y-4">
-            <h2 className="font-semibold text-lg">Direcciones</h2>
-            <ul className="space-y-3 max-h-64 overflow-auto pr-1">
-              {addresses.length === 0 && <li className="text-xs text-gray-500">Sin direcciones</li>}
-              {addresses.map((addr, i) => (
-                <li key={i} className="border rounded p-2 relative group text-xs space-y-0.5 bg-gray-50">
-                  <p className="font-medium">{addr.street}</p>
-                  <p className="text-[10px] text-gray-600">{addr.city} {addr.state} {addr.zipCode} {addr.country}</p>
-                  <div className="flex justify-between items-center mt-1">
-                    <button onClick={() => setDefaultAddress(i)} className={`text-[10px] px-2 py-0.5 rounded ${addr.isDefault? 'bg-primary-600 text-white':'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}>{addr.isDefault? 'Default':'Hacer default'}</button>
-                    <button onClick={() => removeAddress(i)} className="text-[10px] text-red-600 hover:underline">Eliminar</button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-            <div className="space-y-2 pt-2 border-t">
-              <input placeholder="Calle" value={addrDraft.street} onChange={e=>setAddrDraft(d=>({...d,street:e.target.value}))} className="w-full border rounded px-2 py-1 text-xs"/>
-              <input placeholder="Ciudad" value={addrDraft.city} onChange={e=>setAddrDraft(d=>({...d,city:e.target.value}))} className="w-full border rounded px-2 py-1 text-xs"/>
-              <div className="grid grid-cols-3 gap-2">
-                <input placeholder="Estado" value={addrDraft.state} onChange={e=>setAddrDraft(d=>({...d,state:e.target.value}))} className="border rounded px-2 py-1 text-xs"/>
-                <input placeholder="CP" value={addrDraft.zipCode} onChange={e=>setAddrDraft(d=>({...d,zipCode:e.target.value}))} className="border rounded px-2 py-1 text-xs"/>
-                <input placeholder="País" value={addrDraft.country} onChange={e=>setAddrDraft(d=>({...d,country:e.target.value}))} className="border rounded px-2 py-1 text-xs"/>
-              </div>
-              <button onClick={addAddress} className="w-full text-[11px] bg-indigo-600 text-white rounded py-1 hover:bg-indigo-500">Añadir dirección</button>
-            </div>
-          </section>
-        </div>
-      )}
-
-      {/* PIN Admin Section (solo visible si role admin) */}
-      {!loading && profile?.role === 'admin' && (
-        <section className="bg-white rounded-lg shadow p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-lg">Seguridad Administrador (PIN)</h2>
-            <button onClick={() => setPinSectionOpen(o => !o)} className="text-xs text-indigo-600 underline">{pinSectionOpen ? 'Ocultar' : 'Mostrar'}</button>
           </div>
-          {pinSectionOpen && (
-            <div className="space-y-4 text-sm">
-              <div className="flex flex-wrap gap-2 items-center text-xs">
-                <span className={`px-2 py-0.5 rounded ${pinStatus.enabled ? 'bg-primary-100 text-primary-700':'bg-gray-200 text-gray-600'}`}>{pinStatus.enabled ? 'PIN habilitado':'PIN no configurado'}</span>
-                {pinStatus.lockedUntil && remainingLockMs > 0 && (
-                  <span className="px-2 py-0.5 rounded bg-red-100 text-red-700">Bloqueado {remainingLockMin}m</span>
-                )}
-                {!pinStatus.lockedUntil && pinStatus.enabled && (
-                  <span className="px-2 py-0.5 rounded bg-gray-100 text-gray-700">Intentos fallidos: {pinStatus.attempts}</span>
-                )}
-              </div>
-
-              {pinError && <div className="text-xs text-red-600 bg-red-50 border border-red-200 px-2 py-1 rounded">{pinError}</div>}
-              {pinMessage && <div className="text-xs text-primary-600 bg-primary-50 border border-primary-200 px-2 py-1 rounded">{pinMessage}</div>}
-
-              {!pinStatus.enabled && (
-                <div className="space-y-2">
-                  <p className="text-xs text-gray-600">Configura un PIN numérico para requerir un segundo paso al iniciar sesión como admin.</p>
-                  <input maxLength={10} placeholder="Nuevo PIN (4-10 dígitos)" value={pinForm.pin} onChange={e=>setPinForm(f=>({...f,pin:e.target.value.replace(/[^0-9]/g,'')}))} className="border rounded px-2 py-1 text-xs"/>
-                  <button disabled={pinLoading} onClick={handleSetPin} className="text-xs px-3 py-1 bg-indigo-600 text-white rounded disabled:opacity-50">{pinLoading? 'Guardando...' : 'Guardar PIN'}</button>
-                </div>
-              )}
-
-              {pinStatus.enabled && (
-                <div className="grid md:grid-cols-2 gap-6">
-                  {/* Cambiar PIN */}
-                  <div className="space-y-2">
-                    <h3 className="font-semibold text-sm">Cambiar PIN</h3>
-                    <input placeholder="PIN actual" maxLength={10} value={pinForm.oldPin} onChange={e=>setPinForm(f=>({...f,oldPin:e.target.value.replace(/[^0-9]/g,'')}))} className="border rounded px-2 py-1 text-xs"/>
-                    <input placeholder="Nuevo PIN" maxLength={10} value={pinForm.newPin} onChange={e=>setPinForm(f=>({...f,newPin:e.target.value.replace(/[^0-9]/g,'')}))} className="border rounded px-2 py-1 text-xs"/>
-                    <input placeholder="Confirmar nuevo PIN" maxLength={10} value={pinForm.confirmPin} onChange={e=>setPinForm(f=>({...f,confirmPin:e.target.value.replace(/[^0-9]/g,'')}))} className="border rounded px-2 py-1 text-xs"/>
-                    <button disabled={pinLoading} onClick={handleChangePin} className="text-xs px-3 py-1 bg-indigo-600 text-white rounded disabled:opacity-50">{pinLoading? 'Actualizando...' : 'Actualizar'}</button>
-                  </div>
-                  {/* Deshabilitar PIN */}
-                  <div className="space-y-2">
-                    <h3 className="font-semibold text-sm">Deshabilitar PIN</h3>
-                    <input placeholder="PIN actual" maxLength={10} value={pinForm.pin} onChange={e=>setPinForm(f=>({...f,pin:e.target.value.replace(/[^0-9]/g,'')}))} className="border rounded px-2 py-1 text-xs"/>
-                    <button disabled={pinLoading} onClick={handleDisablePin} className="text-xs px-3 py-1 bg-red-600 text-white rounded disabled:opacity-50">{pinLoading? 'Procesando...' : 'Deshabilitar'}</button>
-                    <p className="text-[10px] text-gray-500">Deshabilitar elimina el segundo factor hasta que configures uno nuevo.</p>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </section>
-      )}
+        </div>
+      </div>
     </div>
   );
 }
-

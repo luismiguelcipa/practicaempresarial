@@ -3,7 +3,6 @@ import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-import MPCardPayment from './MPCardPayment';
 
 const SimpleCheckout = () => {
   const { items, getTotalPrice, clearCart } = useCart();
@@ -143,7 +142,7 @@ const SimpleCheckout = () => {
                       </div>
                       <div>
                         <div className="font-medium">Tarjeta en el sitio (API)</div>
-                        <div className="text-sm text-gray-600">Formulario embebido con Mercado Pago</div>
+                        <div className="text-sm text-gray-600">Formulario embebido con Wompi</div>
                       </div>
                     </div>
                   </label>
@@ -202,121 +201,21 @@ const SimpleCheckout = () => {
                 )}
 
                 {paymentMethod === 'card_api' && (
-                  <div className="mt-4 p-3 border border-gray-200 rounded-lg">
-                    <MPCardPayment
-                      amount={getTotalPrice()}
-                      processPayment={async (cardFormData) => {
-                        // Mapear IDs numéricos a ObjectIds reales de MongoDB
-                        const idMapping = {
-                          1: '68d6f9300bed4514d95710ba',
-                          2: '68d6f9300bed4514d95710bb',
-                          3: '68d6f9300bed4514d95710ba',
-                          4: '68d6f9300bed4514d95710bb',
-                          5: '68d6f9300bed4514d95710bc',
-                          6: '68d6f9300bed4514d95710bd'
-                        };
-
-                        const payload = {
-                          items: items.map(item => ({
-                            productId: idMapping[item.id] || item.id || item._id || '68d6f9300bed4514d95710ba',
-                            quantity: item.quantity
-                          })),
-                          payer: {
-                            email: user.email,
-                            identification: cardFormData.payer?.identification
-                          },
-                          card: {
-                            token: cardFormData.token,
-                            installments: cardFormData.installments,
-                            payment_method_id: cardFormData.payment_method_id,
-                            issuer_id: cardFormData.issuer_id
-                          },
-                          shippingAddress: {
-                            street: 'Dirección por definir',
-                            city: 'Bogotá',
-                            state: 'Cundinamarca',
-                            zipCode: '110111',
-                            country: 'Colombia'
-                          }
-                        };
-
-                        const resp = await api.post('/payments/card', payload);
-                        if (resp.data?.success) {
-                          clearCart();
-                          if (resp.data.payment.status === 'approved') {
-                            navigate('/payment-success');
-                          } else {
-                            navigate('/payment-pending');
-                          }
-                        } else {
-                          throw new Error(resp.data?.message || 'Error procesando pago');
-                        }
-                      }}
-                      onError={(e) => console.error('Brick error', e)}
-                      onFallback={async () => {
-                        try {
-                          // Preparar preferencia y redirigir (plan B)
-                          const idMapping = {
-                            1: '68d6f9300bed4514d95710ba',
-                            2: '68d6f9300bed4514d95710bb',
-                            3: '68d6f9300bed4514d95710ba',
-                            4: '68d6f9300bed4514d95710bb',
-                            5: '68d6f9300bed4514d95710bc',
-                            6: '68d6f9300bed4514d95710bd'
-                          };
-                          const orderData = {
-                            items: items.map(item => ({
-                              productId: idMapping[item.id] || item.id || item._id || '68d6f9300bed4514d95710ba',
-                              quantity: item.quantity,
-                              price: item.price
-                            })),
-                            shippingAddress: { street: 'Dirección por definir', city: 'Bogotá', state: 'Cundinamarca', zipCode: '110111', country: 'Colombia' }
-                          };
-                          const response = await api.post('/payments/create-preference', orderData);
-                          if (response.data?.success && response.data.init_point) {
-                            clearCart();
-                            window.location.href = response.data.init_point;
-                          } else {
-                            alert(response.data?.message || 'No se pudo iniciar Mercado Pago');
-                          }
-                        } catch (err) {
-                          console.error(err);
-                          alert(err.response?.data?.message || err.message || 'Error iniciando Mercado Pago');
-                        }
-                      }}
-                    />
-                    {/* Botón alternativo siempre visible por si el Brick no aparece */}
-                    <div className="mt-3 text-center">
+                  <div className="mt-4 p-3 border border-blue-200 bg-blue-50 rounded-lg">
+                    <div className="text-center">
+                      <h3 className="text-lg font-semibold text-blue-800 mb-2">💳 Pago con Tarjeta</h3>
+                      <p className="text-blue-700 mb-4">
+                        Para una mejor experiencia de pago, ahora usamos Wompi - procesador de pagos especializado en Colombia.
+                      </p>
                       <button
-                        type="button"
-                        onClick={async () => {
-                          try {
-                            const idMapping = { 1: '68d6f9300bed4514d95710ba', 2: '68d6f9300bed4514d95710bb', 3: '68d6f9300bed4514d95710ba', 4: '68d6f9300bed4514d95710bb', 5: '68d6f9300bed4514d95710bc', 6: '68d6f9300bed4514d95710bd' };
-                            const orderData = {
-                              items: items.map(item => ({
-                                productId: idMapping[item.id] || item.id || item._id || '68d6f9300bed4514d95710ba',
-                                quantity: item.quantity,
-                                price: item.price
-                              })),
-                              shippingAddress: { street: 'Dirección por definir', city: 'Bogotá', state: 'Cundinamarca', zipCode: '110111', country: 'Colombia' }
-                            };
-                            const response = await api.post('/payments/create-preference', orderData);
-                            if (response.data?.success && response.data.init_point) {
-                              clearCart();
-                              window.location.href = response.data.init_point;
-                            } else {
-                              alert(response.data?.message || 'No se pudo iniciar Mercado Pago');
-                            }
-                          } catch (err) {
-                            console.error(err);
-                            alert(err.response?.data?.message || err.message || 'Error iniciando Mercado Pago');
-                          }
-                        }}
-                        className="inline-block bg-gray-800 text-white py-2 px-4 rounded hover:bg-gray-900"
+                        onClick={() => navigate('/wompi-checkout')}
+                        className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
                       >
-                        Usar método alternativo (abrir Mercado Pago)
+                        Continuar con Wompi 🚀
                       </button>
-                      <p className="text-xs text-gray-500 mt-1">Si el formulario tarda, usa esta opción para continuar.</p>
+                      <p className="text-xs text-blue-600 mt-2">
+                        Acepta tarjetas de crédito y débito, PSE y más métodos de pago
+                      </p>
                     </div>
                   </div>
                 )}
@@ -358,7 +257,7 @@ const SimpleCheckout = () => {
 
               {user && (
                 <>
-                  {/* Botón de redirección a Mercado Pago oculto */}
+                  {/* Botón de redirección a Wompi oculto */}
 
                   {/* Mensaje del formulario embebido removido */}
                   {paymentMethod === 'card_api' && (

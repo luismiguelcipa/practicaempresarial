@@ -179,17 +179,23 @@ const OrderConfirmation = () => {
                 </div>
               )}
 
-              {order.paymentMethod === 'mercadopago' && (
+              {(order.paymentMethod === 'wompi' || order.paymentMethod === 'wompi_card') && (
                 <div>
                   <p className="text-sm text-gray-700">
-                    Pago procesado a través de MercadoPago
+                    Pago procesado a través de Wompi
                   </p>
-                  {order.mercadoPagoPaymentId && (
+                  {order.wompiTransactionId && (
                     <div className="bg-white rounded p-4 border mt-3">
                       <div className="flex justify-between text-sm">
-                        <span>ID de Pago:</span>
-                        <span className="font-mono">{order.mercadoPagoPaymentId}</span>
+                        <span>ID de Transacción:</span>
+                        <span className="font-mono">{order.wompiTransactionId}</span>
                       </div>
+                      {order.wompiReference && (
+                        <div className="flex justify-between text-sm mt-2">
+                          <span>Referencia:</span>
+                          <span className="font-mono">{order.wompiReference}</span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

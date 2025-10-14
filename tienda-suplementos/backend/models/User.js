@@ -70,7 +70,50 @@ const userSchema = new mongoose.Schema({
     zipCode: String,
     country: String,
     isDefault: { type: Boolean, default: false }
-  }]
+  }],
+  // Información de envío predeterminada
+  shippingInfo: {
+    fullName: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    phoneNumber: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    street: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    addressLine2: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    city: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    region: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    zipCode: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    country: {
+      type: String,
+      trim: true,
+      default: 'Colombia'
+    }
+  }
 }, {
   timestamps: true
 });

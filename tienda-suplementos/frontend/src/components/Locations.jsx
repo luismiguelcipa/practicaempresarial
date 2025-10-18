@@ -1,4 +1,5 @@
 import React from 'react';
+import fotolocal from '../assets/images/fotolocal.png';
 import { MapPin, Clock, Phone, MessageCircle, Navigation, Star, Store, Mail } from 'lucide-react';
 
 const Locations = () => {
@@ -48,6 +49,15 @@ const Locations = () => {
   return (
     <div className="min-h-screen bg-gray-50 pt-24 pb-16">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Imagen de cabecera (desde /public). Si la imagen no existe, se oculta. */}
+        <div className="mb-10">
+          <img
+            src={fotolocal}
+            alt="Foto de la tienda INT Suplementos"
+            className=" h-56 sm:h-72 lg:h-96 object-cover rounded-2xl shadow-xl ring-1 ring-black/5"
+          />
+        </div>
+
         {/* Header */}
         <div className="text-center mb-16">
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-6">

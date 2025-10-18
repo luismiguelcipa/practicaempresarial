@@ -1,4 +1,5 @@
 ﻿const express = require('express');
+const mongoose = require('mongoose');
 const { protect } = require('../middleware/auth');
 const { 
   createWompiTransaction, 
@@ -36,14 +37,51 @@ router.post('/create-wompi-transaction', protect, async (req, res) => {
       const productId = item.productId || item.id || item._id;
       console.log('🔍 ProductId extraído:', productId);
       
-      const product = await Product.findById(productId);
+      let product = null;
+      
+      // Intentar encontrar el producto, manejando diferentes tipos de ID
+      try {
+        if (mongoose.Types.ObjectId.isValid(productId)) {
+          // Si es un ObjectId válido, usar findById normal
+          product = await Product.findById(productId);
+        } else {
+          // Si no es un ObjectId válido, buscar por otros campos posibles
+          console.log('⚠️ ID no es ObjectId válido, buscando por campos alternativos...');
+          
+          // Intentar buscar por diferentes campos que podrían contener este ID
+          product = await Product.findOne({
+            $or: [
+              { sku: productId },
+              { legacy_id: productId },
+              { id: productId }
+            ]
+          });
+          
+          // Si aún no encontramos nada, intentar convertir a ObjectId si es un número
+          if (!product && typeof productId === 'number') {
+            // Para productos legacy con IDs numéricos, podrías tener un mapeo
+            console.log('🔄 Intentando buscar producto legacy con ID numérico:', productId);
+            
+            // Buscar todos los productos y ver cuál coincide (método temporal)
+            const allProducts = await Product.find({});
+            product = allProducts.find(p => 
+              p.sku === productId.toString() || 
+              p.legacy_id === productId ||
+              p.name === item.name
+            );
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error buscando producto:', error);
+      }
+      
       console.log('🔍 Producto encontrado:', product ? `${product.name} - $${product.price}` : 'NO ENCONTRADO');
       
       if (!product) {
         console.log('❌ Error: Producto no encontrado -', productId);
         return res.status(400).json({
           success: false,
-          message: `Producto ${productId} no encontrado`
+          message: `Producto ${item.name || productId} no encontrado. Verifica que el producto esté disponible.`
         });
       }
 

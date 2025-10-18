@@ -2,6 +2,7 @@ const express = require('express');
 const { protect } = require('../middleware/auth');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
+const { sendNewOrderNotificationToAdmin, sendOrderConfirmationToCustomer } = require('../utils/emailService');
 
 const router = express.Router();
 
@@ -80,6 +81,20 @@ router.post('/create', protect, async (req, res) => {
     
     await order.populate('items.product');
 
+    // Enviar notificaciones por correo
+    try {
+      // Notificar al administrador
+      await sendNewOrderNotificationToAdmin(order, req.user);
+      
+      // Confirmar al cliente
+      await sendOrderConfirmationToCustomer(order, req.user);
+      
+      console.log('✅ Correos de notificación enviados para orden:', order._id);
+    } catch (emailError) {
+      console.error('❌ Error enviando correos de notificación:', emailError);
+      // No fallar la orden por problemas de correo
+    }
+
     res.json({
       success: true,
       message: 'Orden creada exitosamente',
@@ -92,6 +107,80 @@ router.post('/create', protect, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error creando la orden'
+    });
+  }
+});
+
+// Obtener órdenes del usuario
+router.get('/my-orders', protect, async (req, res) => {
+  try {
+    console.log('Obteniendo órdenes para usuario:', req.user.id);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Obtener órdenes del usuario con paginación
+    const orders = await Order.find({ user: req.user.id })
+      .populate('items.product', 'name price images')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    console.log(`Encontradas ${orders.length} órdenes para el usuario`);
+
+    // Contar total de órdenes
+    const total = await Order.countDocuments({ user: req.user.id });
+    console.log(`Total de órdenes: ${total}`);
+
+    // Formatear las órdenes para el frontend
+    const formattedOrders = orders.map(order => ({
+      id: order._id,
+      orderNumber: order.orderNumber || `ORDER-${order._id.toString().slice(-8).toUpperCase()}`,
+      status: order.status,
+      paymentStatus: order.paymentStatus,
+      paymentMethod: order.paymentMethod,
+      totalAmount: order.totalAmount,
+      createdAt: order.createdAt,
+      updatedAt: order.updatedAt,
+      shippingAddress: order.shippingAddress,
+      items: order.items.map(item => ({
+        product: item.product ? {
+          id: item.product._id,
+          name: item.product.name,
+          price: item.product.price,
+          image: item.product.images && item.product.images.length > 0 
+            ? item.product.images[0] 
+            : null
+        } : {
+          id: null,
+          name: 'Producto eliminado',
+          price: item.price,
+          image: null
+        },
+        quantity: item.quantity,
+        price: item.price,
+        total: item.quantity * item.price
+      })),
+      wompiReference: order.wompiReference,
+      wompiTransactionId: order.wompiTransactionId
+    }));
+
+    res.json({
+      success: true,
+      orders: formattedOrders,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+
+  } catch (error) {
+    console.error('Error obteniendo órdenes:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error obteniendo las órdenes'
     });
   }
 });
@@ -250,71 +339,6 @@ router.put('/:orderId/cancel', protect, async (req, res) => {
   }
 });
 
-// Obtener órdenes del usuario
-router.get('/my-orders', protect, async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
-
-    // Obtener órdenes del usuario con paginación
-    const orders = await Order.find({ user: req.user.id })
-      .populate('items.product', 'name price images')
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
-
-    // Contar total de órdenes
-    const total = await Order.countDocuments({ user: req.user.id });
-
-    // Formatear las órdenes para el frontend
-    const formattedOrders = orders.map(order => ({
-      id: order._id,
-      orderNumber: order.orderNumber || `ORDER-${order._id.toString().slice(-8).toUpperCase()}`,
-      status: order.status,
-      paymentStatus: order.paymentStatus,
-      paymentMethod: order.paymentMethod,
-      totalAmount: order.totalAmount,
-      createdAt: order.createdAt,
-      updatedAt: order.updatedAt,
-      shippingAddress: order.shippingAddress,
-      items: order.items.map(item => ({
-        product: {
-          id: item.product._id,
-          name: item.product.name,
-          price: item.product.price,
-          image: item.product.images && item.product.images.length > 0 
-            ? item.product.images[0] 
-            : null
-        },
-        quantity: item.quantity,
-        price: item.price,
-        total: item.quantity * item.price
-      })),
-      wompiReference: order.wompiReference,
-      wompiTransactionId: order.wompiTransactionId
-    }));
-
-    res.json({
-      success: true,
-      orders: formattedOrders,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit)
-      }
-    });
-
-  } catch (error) {
-    console.error('Error obteniendo órdenes:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error obteniendo las órdenes'
-    });
-  }
-});
-
 // Obtener detalles de una orden específica
 router.get('/:orderId', protect, async (req, res) => {
   try {
@@ -341,12 +365,18 @@ router.get('/:orderId', protect, async (req, res) => {
       updatedAt: order.updatedAt,
       shippingAddress: order.shippingAddress,
       items: order.items.map(item => ({
-        product: {
+        product: item.product ? {
           id: item.product._id,
           name: item.product.name,
           price: item.product.price,
           description: item.product.description,
           images: item.product.images
+        } : {
+          id: null,
+          name: 'Producto eliminado',
+          price: item.price,
+          description: 'Este producto ya no está disponible',
+          images: []
         },
         quantity: item.quantity,
         price: item.price,

@@ -40,9 +40,33 @@ const Orders = () => {
       }
     } catch (error) {
       console.error('Error fetching orders:', error);
+      console.error('Error response:', error.response);
+      console.error('Error status:', error.response?.status);
+      console.error('Error data:', error.response?.data);
+      
+      let errorMessage = 'Error conectando con el servidor';
+      
+      if (error.response) {
+        // El servidor respondió con un código de error
+        if (error.response.status === 401) {
+          errorMessage = 'Sesión expirada. Por favor inicia sesión nuevamente.';
+        } else if (error.response.status === 403) {
+          errorMessage = 'No tienes permisos para acceder a esta información.';
+        } else if (error.response.status === 404) {
+          errorMessage = 'El servicio de pedidos no está disponible.';
+        } else if (error.response.status >= 500) {
+          errorMessage = 'Error interno del servidor. Intenta más tarde.';
+        } else if (error.response.data?.message) {
+          errorMessage = error.response.data.message;
+        }
+      } else if (error.request) {
+        // La petición se hizo pero no hubo respuesta
+        errorMessage = 'No se pudo conectar con el servidor. Verifica tu conexión.';
+      }
+      
       setAlert({
         show: true,
-        message: 'Error conectando con el servidor',
+        message: errorMessage,
         type: 'error'
       });
     } finally {

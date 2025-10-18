@@ -8,6 +8,9 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        display: ["'Libre Baskerville'", 'serif'],
+      },
       colors: {
         primary: {
           50: '#fef2f2',   // Rojo muy claro

@@ -109,14 +109,14 @@ const Header = () => {
         </div>
 
         {/* Enlaces principales */}
-        <div className="hidden lg:flex items-center gap-6">
-          <Link to="/" className="text-white font-semibold hover:text-red-400 transition-all duration-300 hover:-translate-y-1">
+  <div className="hidden lg:flex items-center gap-6 font-display">
+          <Link to="/" className="text-white font-medium hover:text-red-400 transition-all duration-300 hover:-translate-y-1">
             Inicio
           </Link>
 
           {/* Dropdown Catálogo */}
           <div className="relative group">
-            <button className="text-white font-semibold flex items-center gap-2 hover:text-red-400 transition-all duration-300 hover:-translate-y-1">
+            <button className="text-white font-medium flex items-center gap-2 hover:text-red-400 transition-all duration-300 hover:-translate-y-1 font-display">
               Catálogo
               <svg className="w-4 h-4 transition-transform duration-300 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
@@ -249,7 +249,7 @@ const Header = () => {
 
           {/* Dropdown Accesorios */}
           <div className="relative group">
-            <button className="text-white font-semibold flex items-center gap-2 hover:text-red-400 transition-all duration-300 hover:-translate-y-1">
+            <button className="text-white font-medium flex items-center gap-2 hover:text-red-400 transition-all duration-300 hover:-translate-y-1 font-display">
               Accesorios
               <svg className="w-4 h-4 transition-transform duration-300 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
@@ -305,23 +305,23 @@ const Header = () => {
             </div>
           </div>
 
-          <Link to="/products" className="text-white font-semibold hover:text-red-400 transition-all duration-300 hover:-translate-y-1">
+          <Link to="/products" className="text-white font-medium hover:text-red-400 transition-all duration-300 hover:-translate-y-1">
             Volumen
           </Link>
 
-          <Link to="/products" className="text-white font-semibold hover:text-red-400 transition-all duration-300 hover:-translate-y-1">
+          <Link to="/products" className="text-white font-medium hover:text-red-400 transition-all duration-300 hover:-translate-y-1">
             Definición
           </Link>
 
           {isAuthenticated && user?.role === 'admin' && (
-            <Link to="/admin/products" className="text-white font-semibold hover:text-red-400 transition-all duration-300 hover:-translate-y-1">
+            <Link to="/admin/products" className="text-white font-medium hover:text-red-400 transition-all duration-300 hover:-translate-y-1">
               Admin
             </Link>
           )}
 
           {/* Dropdown Nosotros */}
           <div className="relative group">
-            <button className="text-white font-semibold flex items-center gap-2 hover:text-red-400 transition-all duration-300 hover:-translate-y-1">
+            <button className="text-white font-medium flex items-center gap-2 hover:text-red-400 transition-all duration-300 hover:-translate-y-1 font-display">
               Nosotros
               <svg className="w-4 h-4 transition-transform duration-300 group-hover:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
@@ -381,7 +381,7 @@ const Header = () => {
           {isAuthenticated && (
             <button
               onClick={() => { logout(); navigate('/'); }}
-              className="inline-flex items-center gap-1 text-[11px] font-semibold px-3 py-1.5 rounded-full bg-red-600/80 hover:bg-red-600 text-white shadow transition-colors active:scale-95"
+              className="inline-flex items-center gap-1 text-[11px] font-medium px-3 py-1.5 rounded-full bg-red-600/80 hover:bg-red-600 text-white shadow transition-colors active:scale-95"
             >
               <span className="leading-none">Salir</span>
             </button>

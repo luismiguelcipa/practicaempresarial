@@ -10,7 +10,7 @@ const Home = () => {
   const featuredProducts = products.slice(0, 4);
 
   return (
-    <div className="min-h-screen">
+  <div className="min-h-screen text-gray-900">
       {/* Hero Section */}
       {/* Hero Video - Full screen menos el alto del carrusel superior (h-9 = 36px) */}
       <section
@@ -31,36 +31,36 @@ const Home = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-16 bg-white">
+  <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="text-center">
-              <div className="bg-primary-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Truck className="text-primary-600" size={24} />
+              <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Truck className="text-red-600" size={24} />
               </div>
               <h3 className="text-lg font-semibold mb-2">Envío Gratis</h3>
               <p className="text-gray-600">DESDE $0</p>
             </div>
             
             <div className="text-center">
-              <div className="bg-primary-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Shield className="text-primary-600" size={24} />
+              <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Shield className="text-red-600" size={24} />
               </div>
               <h3 className="text-lg font-semibold mb-2">Garantía</h3>
               <p className="text-gray-600">30 días de garantía</p>
             </div>
             
             <div className="text-center">
-              <div className="bg-primary-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Star className="text-primary-600" size={24} />
+              <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Star className="text-red-600" size={24} />
               </div>
               <h3 className="text-lg font-semibold mb-2">Calidad Premium</h3>
               <p className="text-gray-600">Productos certificados</p>
             </div>
             
             <div className="text-center">
-              <div className="bg-primary-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <RotateCcw className="text-primary-600" size={24} />
+              <div className="bg-gray-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <RotateCcw className="text-red-600" size={24} />
               </div>
               <h3 className="text-lg font-semibold mb-2">Devoluciones</h3>
               <p className="text-gray-600">Fácil proceso de devolución</p>
@@ -68,9 +68,9 @@ const Home = () => {
           </div>
         </div>
       </section>
-
+      <hr className="my-8 border-black" />
       {/* Featured Products */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
@@ -102,7 +102,7 @@ const Home = () => {
           </div>
         </div>
       </section>
-        <h2>ola</h2>
+        <hr className="my-8 border-black" />
       {/* Category Carousel */}
       <CategoryCarousel />
     </div>

@@ -3,6 +3,7 @@ const router = express.Router();
 const { protect } = require('../middleware/auth');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
+const { sendNewOrderNotificationToAdmin, sendOrderConfirmationToCustomer } = require('../utils/emailService');
 const {
   createWompiTransaction,
   verifyWompiTransaction,
@@ -150,6 +151,24 @@ router.get('/verify-wompi/:transactionId', protect, async (req, res) => {
             { $inc: { stock: -item.quantity } }
           );
         }
+        
+        // Enviar notificaciones por correo cuando el pago es aprobado
+        try {
+          // Obtener información del usuario
+          await order.populate('user');
+          await order.populate('items.product');
+          
+          // Notificar al administrador
+          await sendNewOrderNotificationToAdmin(order, order.user);
+          
+          // Confirmar al cliente
+          await sendOrderConfirmationToCustomer(order, order.user);
+          
+          console.log('✅ Correos de confirmación enviados para orden Wompi:', order._id);
+        } catch (emailError) {
+          console.error('❌ Error enviando correos de confirmación Wompi:', emailError);
+          // No fallar la orden por problemas de correo
+        }
         break;
       case 'DECLINED':
       case 'ERROR':
@@ -222,6 +241,24 @@ router.post('/wompi-webhook', async (req, res) => {
                   item.product,
                   { $inc: { stock: -item.quantity } }
                 );
+              }
+              
+              // Enviar notificaciones por correo cuando el pago es aprobado vía webhook
+              try {
+                // Obtener información del usuario
+                await order.populate('user');
+                await order.populate('items.product');
+                
+                // Notificar al administrador
+                await sendNewOrderNotificationToAdmin(order, order.user);
+                
+                // Confirmar al cliente
+                await sendOrderConfirmationToCustomer(order, order.user);
+                
+                console.log('✅ Correos de confirmación enviados para orden Wompi webhook:', order._id);
+              } catch (emailError) {
+                console.error('❌ Error enviando correos de confirmación Wompi webhook:', emailError);
+                // No fallar la orden por problemas de correo
               }
             }
             break;

@@ -27,6 +27,15 @@ import AdminLayout from './components/AdminLayout';
 import RequireAdmin from './components/RequireAdmin';
 import Footer from './components/fotterPrueba';
 import Locations from './components/Locations';
+// Páginas por categoría
+import Proteinas from './pages/categories/Proteinas';
+import Creatina from './pages/categories/Creatina';
+import Aminoacidos from './pages/categories/Aminoacidos';
+import PreEntreno from './pages/categories/PreEntreno';
+import Vitaminas from './pages/categories/Vitaminas';
+import Salud from './pages/categories/Salud';
+import Complementos from './pages/categories/Complementos';
+import Comida from './pages/categories/Comida';
 
 
 function App() {
@@ -80,6 +89,15 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/products" element={<Products />} />
+          {/* Rutas específicas por categoría */}
+          <Route path="/products/proteinas" element={<Proteinas />} />
+          <Route path="/products/creatina" element={<Creatina />} />
+          <Route path="/products/aminoacidos" element={<Aminoacidos />} />
+          <Route path="/products/preworkout" element={<PreEntreno />} />
+          <Route path="/products/vitaminas" element={<Vitaminas />} />
+          <Route path="/products/salud" element={<Salud />} />
+          <Route path="/products/complementos" element={<Complementos />} />
+          <Route path="/products/comida" element={<Comida />} />
           <Route path="/products/:category" element={<Products />} />
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/cart" element={<Cart />} />

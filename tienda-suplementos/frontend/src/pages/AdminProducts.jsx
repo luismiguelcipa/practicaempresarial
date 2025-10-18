@@ -232,7 +232,7 @@ export default function AdminProducts() {
         </header>
 
         {loading && <p className="text-sm text-gray-500">Cargando categorías...</p>}
-        {error && <div className="text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded-lg shadow-sm">{error}</div>}
+  {error && <div className="text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded-lg">{error}</div>}
 
         {!loading && categories.length === 0 && (
           <div className="text-sm text-gray-500">No hay productos aún.</div>
@@ -249,7 +249,7 @@ export default function AdminProducts() {
               <button
                 key={cat}
                 onClick={() => handleCategorySelect(cat)}
-                className="group relative p-6 rounded-xl border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 hover:from-red-50 hover:to-orange-50 hover:border-red-300 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col text-left transform hover:-translate-y-1"
+                className="group relative p-6 rounded-xl shadow-sm hover:shadow-lg border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 hover:from-red-50 hover:to-orange-50 hover:border-black transition-all duration-300 flex flex-col text-left transform hover:-translate-y-1"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
@@ -377,7 +377,7 @@ export default function AdminProducts() {
           </header>
 
           {combosLoading && <p className="text-sm text-gray-500">Cargando combos...</p>}
-          {combosError && <div className="text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded-lg shadow-sm">{combosError}</div>}
+          {combosError && <div className="text-sm text-red-600 bg-red-50 border border-red-200 px-3 py-2 rounded-lg">{combosError}</div>}
 
           {/* Tarjetas de categorías de combos */}
           <div className="grid sm:grid-cols-2 gap-5">
@@ -389,7 +389,7 @@ export default function AdminProducts() {
                 <button
                   key={category}
                   onClick={() => navigate(`/admin/combos/${category.toLowerCase()}`)}
-                  className="group relative p-6 rounded-xl border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 hover:from-red-50 hover:to-orange-50 hover:border-red-300 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col text-left transform hover:-translate-y-1"
+                  className="group relative p-6 rounded-xl shadow-sm hover:shadow-lg border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 hover:from-red-50 hover:to-orange-50 hover:border-red-300 transition-all duration-300 flex flex-col text-left transform hover:-translate-y-1"
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
@@ -546,7 +546,7 @@ export default function AdminProducts() {
               <button
                 key={tipo}
                 onClick={() => handleTypeSelect(tipo)}
-                className="group relative p-6 rounded-xl border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 hover:from-rose-50 hover:to-pink-50 hover:border-rose-300 shadow-sm hover:shadow-lg transition-all duration-300 flex flex-col text-left transform hover:-translate-y-1"
+                className="group relative p-6 rounded-xl shadow-sm hover:shadow-lg border-2 border-gray-200 bg-gradient-to-br from-white to-gray-50 hover:from-rose-50 hover:to-pink-50 hover:border-rose-300 transition-all duration-300 flex flex-col text-left transform hover:-translate-y-1"
               >
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1">
@@ -623,14 +623,14 @@ export default function AdminProducts() {
   // Vista 3: Tabla filtrada por categoría y tipo seleccionados
   return (
     <div className="pt-24 md:pt-28 p-6 max-w-7xl mx-auto space-y-6">
-      <header className="bg-gradient-to-r from-red-50 to-orange-50 rounded-xl p-6 shadow-sm border border-red-100">
+  <header className="bg-gradient-to-r from-red-50 to-orange-50 rounded-xl p-6 border border-red-100">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="space-y-3">
             {/* Breadcrumb mejorado */}
             <nav className="flex items-center gap-2 text-sm">
               <button 
                 onClick={backToCategories}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white hover:bg-red-100 text-red-600 font-medium transition-all shadow-sm"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white hover:bg-red-100 text-red-600 font-medium transition-all"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -645,14 +645,14 @@ export default function AdminProducts() {
                   </svg>
                   <button 
                     onClick={backToTypes}
-                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white hover:bg-rose-100 text-rose-600 font-medium transition-all shadow-sm"
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white hover:bg-rose-100 text-rose-600 font-medium transition-all"
                   >
                     {selectedCategory}
                   </button>
                   <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                   </svg>
-                  <span className="px-3 py-1.5 rounded-lg bg-red-600 text-white font-semibold shadow-sm">
+                  <span className="px-3 py-1.5 rounded-lg bg-red-600 text-white font-semibold">
                     {selectedType}
                   </span>
                 </>
@@ -663,7 +663,7 @@ export default function AdminProducts() {
                   <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                   </svg>
-                  <span className="px-3 py-1.5 rounded-lg bg-red-600 text-white font-semibold shadow-sm">
+                  <span className="px-3 py-1.5 rounded-lg bg-red-600 text-white font-semibold">
                     {selectedCategory}
                   </span>
                 </>
@@ -747,7 +747,7 @@ export default function AdminProducts() {
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-red-200 border-t-red-600"></div>
         </div>
       ) : (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+  <div className="bg-white rounded-xl shadow border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead className="bg-gradient-to-r from-red-50 to-orange-50 border-b-2 border-red-200">
@@ -787,7 +787,7 @@ export default function AdminProducts() {
                     <span className="font-bold text-red-600 text-base">${p.price}</span>
                   </td>
                   <td className="p-4">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm ${p.inStock !== false ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${p.inStock !== false ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
                       {p.inStock !== false ? (
                         <>
                           <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
@@ -806,7 +806,7 @@ export default function AdminProducts() {
                     </span>
                   </td>
                   <td className="p-4">
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold shadow-sm ${p.isActive?'bg-green-100 text-green-700':'bg-gray-200 text-gray-600'}`}>
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold ${p.isActive?'bg-green-100 text-green-700':'bg-gray-200 text-gray-600'}`}>
                       {p.isActive ? (
                         <>
                           <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
@@ -829,7 +829,7 @@ export default function AdminProducts() {
                       {/* Editar */}
                       <button
                         onClick={() => openEdit(p)}
-                        className="inline-flex items-center justify-center gap-1.5 px-3 h-9 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
+                        className="inline-flex items-center justify-center gap-1.5 px-3 h-9 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
                         title="Editar producto"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -841,7 +841,7 @@ export default function AdminProducts() {
                       <button
                         onClick={() => toggleActive(p)}
                         title={p.isActive ? 'Desactivar producto' : 'Activar producto'}
-                        className={`inline-flex items-center justify-center gap-1.5 px-3 h-9 text-xs font-medium rounded-lg hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 ${
+                        className={`inline-flex items-center justify-center gap-1.5 px-3 h-9 text-xs font-medium rounded-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 ${
                           p.isActive 
                             ? 'bg-amber-500 hover:bg-amber-600 text-white' 
                             : 'bg-green-600 hover:bg-green-700 text-white'
@@ -858,7 +858,7 @@ export default function AdminProducts() {
                           onClick={() => deleteProduct(p)}
                           type="button"
                           title="Eliminar producto definitivamente"
-                          className="inline-flex items-center justify-center gap-1.5 px-3 h-9 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded-lg hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
+                          className="inline-flex items-center justify-center gap-1.5 px-3 h-9 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded-lg hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

@@ -100,7 +100,7 @@ export default function CategoryCarousel() {
   };
 
   return (
-    <div className="w-full py-8 bg-white">
+    <div className="w-full py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h2 className="text-3xl font-bold text-center mb-8 text-gray-900">
           EL PRODUCTO QUE BUSCAS
@@ -113,7 +113,7 @@ export default function CategoryCarousel() {
           {/* Botón Izquierdo - Siempre visible */}
           <button
             onClick={() => scroll('left')}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-gray-100 rounded-full p-2 shadow-lg transition-all"
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg transition-all"
             aria-label="Anterior"
           >
             <ChevronLeft size={24} className="text-orange-500" />
@@ -154,7 +154,7 @@ export default function CategoryCarousel() {
           {/* Botón Derecho - Siempre visible */}
           <button
             onClick={() => scroll('right')}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white hover:bg-gray-100 rounded-full p-2 shadow-lg transition-all"
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white/90 hover:bg-white rounded-full p-2 shadow-lg transition-all"
             aria-label="Siguiente"
           >
             <ChevronRight size={24} className="text-orange-500" />

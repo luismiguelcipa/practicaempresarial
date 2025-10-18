@@ -43,7 +43,7 @@ const WompiCheckout = () => {
     phoneNumber: ''
   });
 
-  const [paymentMethod, setPaymentMethod] = useState('card');
+  const [paymentMethod, setPaymentMethod] = useState('wompi');
   const [loading, setLoading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [errors, setErrors] = useState({});
@@ -109,15 +109,64 @@ const WompiCheckout = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleTransferencia = () => {
+    // Preparar mensaje para WhatsApp
+    const productosTexto = items.map(item => 
+      `• ${item.name} (x${item.quantity}) - $${(item.price * item.quantity).toLocaleString('es-CO')}`
+    ).join('\n');
+    
+    const mensaje = `¡Hola! 👋
+
+Quiero realizar una compra por transferencia bancaria:
+
+*📋 DATOS DEL PEDIDO:*
+${productosTexto}
+
+*💰 Total: $${getTotalPrice().toLocaleString('es-CO')} COP*
+
+*📦 DATOS DE ENVÍO:*
+• Nombre: ${customerData.fullName}
+• Teléfono: ${customerData.phoneNumber}
+• Email: ${customerData.email}
+• Dirección: ${shippingAddress.addressLine1}${shippingAddress.addressLine2 ? ', ' + shippingAddress.addressLine2 : ''}
+• Ciudad: ${shippingAddress.city}, ${shippingAddress.region}
+
+Por favor envíame los datos bancarios para realizar la transferencia. ¡Gracias! 🙏`;
+
+    // Codificar mensaje para URL
+    const mensajeCodificado = encodeURIComponent(mensaje);
+    
+    // Número de WhatsApp desde variable de entorno
+    const numeroWhatsApp = import.meta.env.VITE_WHATSAPP_NUMBER || '573006851794';
+    
+    // Crear URL de WhatsApp
+    const whatsappURL = `https://wa.me/${numeroWhatsApp}?text=${mensajeCodificado}`;
+    
+    // Abrir WhatsApp
+    window.open(whatsappURL, '_blank');
+    
+    // Limpiar carrito después de enviar mensaje
+    setTimeout(() => {
+      clearCart();
+      navigate('/products');
+    }, 1000);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!validateForm()) return;
+
+    // Si es transferencia, redirigir a WhatsApp
+    if (paymentMethod === 'transferencia') {
+      handleTransferencia();
+      return;
+    }
     
     setLoading(true);
     
     try {
-      // Preparar datos para la transacción
+      // Preparar datos para la transacción Wompi
       const transactionData = {
         items: items.map(item => ({
           productId: item._id || item.id,
@@ -129,7 +178,7 @@ const WompiCheckout = () => {
         shippingAddress,
         total: getTotalPrice(),
         reference: `ORDER_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        paymentMethod
+        paymentMethod: 'wompi' // Siempre wompi para pagos online
       };
 
       console.log('🚀 Enviando datos a Wompi:', transactionData);
@@ -368,48 +417,49 @@ const WompiCheckout = () => {
                 <h2 className="text-xl font-semibold mb-4">💳 Método de Pago</h2>
                 
                 <div className="space-y-3">
-                  <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                  <label className="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                     <input
                       type="radio"
                       name="paymentMethod"
-                      value="card"
-                      checked={paymentMethod === 'card'}
+                      value="wompi"
+                      checked={paymentMethod === 'wompi'}
                       onChange={(e) => setPaymentMethod(e.target.value)}
-                      className="mr-3"
+                      className="mr-4 w-4 h-4"
                     />
-                    <div>
-                      <div className="font-medium">💳 Tarjeta de Crédito/Débito</div>
-                      <div className="text-sm text-gray-500">Visa, Mastercard, American Express</div>
+                    <div className="flex-1">
+                      <div className="font-medium text-lg">� Pagar con Wompi</div>
+                      <div className="text-sm text-gray-600 mt-1">
+                        <div className="flex items-center gap-4 mt-2">
+                          <span className="flex items-center gap-1">
+                            💳 <span className="text-xs">Tarjetas</span>
+                          </span>
+                          <span className="flex items-center gap-1">
+                            🏦 <span className="text-xs">PSE</span>
+                          </span>
+                          <span className="flex items-center gap-1">
+                            📱 <span className="text-xs">Nequi</span>
+                          </span>
+                        </div>
+                      </div>
+                      <div className="text-xs text-blue-600 mt-1">🔐 Pago seguro procesado por Wompi</div>
                     </div>
                   </label>
                   
-                  <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+                  <label className="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                     <input
                       type="radio"
                       name="paymentMethod"
-                      value="pse"
-                      checked={paymentMethod === 'pse'}
+                      value="transferencia"
+                      checked={paymentMethod === 'transferencia'}
                       onChange={(e) => setPaymentMethod(e.target.value)}
-                      className="mr-3"
+                      className="mr-4 w-4 h-4"
                     />
-                    <div>
-                      <div className="font-medium">🏦 PSE</div>
-                      <div className="text-sm text-gray-500">Pago Seguro Electrónico</div>
-                    </div>
-                  </label>
-                  
-                  <label className="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
-                    <input
-                      type="radio"
-                      name="paymentMethod"
-                      value="nequi"
-                      checked={paymentMethod === 'nequi'}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                      className="mr-3"
-                    />
-                    <div>
-                      <div className="font-medium">📱 Nequi</div>
-                      <div className="text-sm text-gray-500">Pago con tu cuenta Nequi</div>
+                    <div className="flex-1">
+                      <div className="font-medium text-lg">🏪 Transferencia Bancaria</div>
+                      <div className="text-sm text-gray-600 mt-1">
+                        Te enviaremos los datos bancarios por WhatsApp
+                      </div>
+                      <div className="text-xs text-green-600 mt-1">💬 Contacto directo vía WhatsApp</div>
                     </div>
                   </label>
                 </div>
@@ -419,9 +469,18 @@ const WompiCheckout = () => {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-blue-600 text-white py-4 px-6 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
+                className={`w-full py-4 px-6 rounded-lg text-lg font-semibold transition-colors disabled:opacity-50 ${
+                  paymentMethod === 'transferencia'
+                    ? 'bg-green-600 text-white hover:bg-green-700'
+                    : 'bg-blue-600 text-white hover:bg-blue-700'
+                }`}
               >
-                {loading ? 'Procesando...' : `Procesar Pago - $${getTotalPrice().toLocaleString('es-CO')}`}
+                {loading 
+                  ? 'Procesando...' 
+                  : paymentMethod === 'transferencia'
+                    ? `💬 Enviar por WhatsApp - $${getTotalPrice().toLocaleString('es-CO')}`
+                    : `🔒 Procesar Pago - $${getTotalPrice().toLocaleString('es-CO')}`
+                }
               </button>
             </form>
           </div>
